@@ -8,6 +8,7 @@ Team Penguin Members:
 
 
 ------------------ Project Summary ------------------
+
 A medical records sharing platform, supporting both emergency sharing and recipient specified sharing.  
 
 The program has a web front end, with different portals for doctors and patients.  Patients are able to fill in and create medical fields or upload a pdf, which then fills in for a sql table on a database.  Patients are also able to search for and share documents with doctors that have public accounts on the site, and patients have the ability to create emergency keys, in the form of qr codes, to enable doctors to access their records without sharing access. 
