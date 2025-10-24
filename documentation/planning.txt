@@ -1,0 +1,4 @@
+Web framework: flask
+Database: SQLite/PostgreSQL
+RestApi: flask-restful/restx/other
+Python sql toolkit: SQLAlchemy
