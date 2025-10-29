@@ -25,7 +25,6 @@ def signup():
     phone_number = None
     user_email = None
     password = None
-    confirm_password = None
 
     sign_up_form = SignUp()
     if request.method == "POST":
@@ -38,12 +37,22 @@ def signup():
             password = hashed_password
 
     return render_template("signup_page.html", first_name = first_name, last_name = last_name,
-                        user_email = user_email, phone_number= phone_number, password = password, confirm_password = confirm_password, 
+                        user_email = user_email, phone_number= phone_number, password = password, 
                            form = sign_up_form)
 
-@app.route("/provider")
-def provider_portal():
-    return render_template("provider_homepage.html")
+@app.route("/login_page", methods = ['GET', 'POST'])
+def login():
+    email_login = None
+    password_login = None
+
+    login_form = LogIn()
+    if request.method == "POST":
+        if login_form.validate_on_submit():
+            email_login = login_form.email_login.data
+            password_login = login_form.password_login.data
+
+    return render_template("login_page.html", email_login = email_login, password_login = password_login,
+                           form = login_form)
 
 class SignUp(FlaskForm):
     first_name = StringField("Enter your first name", validators = [validators.DataRequired(message = "First name is required")], render_kw = {'placeholder': "John"})
@@ -68,13 +77,12 @@ class SignUp(FlaskForm):
 
     submit_button = SubmitField("Submit")
 
-#Placeholder for login form
 class LogIn(FlaskForm):
     email_login = StringField("Email", validators=[validators.DataRequired(message="Please enter your email"),validators.Email("Must be a valid email")],
                              render_kw={'placeholder': "Enter your email"})
     password_login = PasswordField("Password.", validators = [validators.DataRequired(message = "Please enter your password"),
                 validators.Length(min = 8, max = 20, message = "Must be between 8 and 20 characters"),
-                validators.Regexp(r'^(?=.*[A-Z])(?=.*[!@#$%^+=-])(?=.{8,20}$)[^{}[\]<|*&"()]*$', message = "Invalid format.")
+                validators.Regexp(r'^(?=.*[A-Z])(?=.*[!@#$%^+=-])(?=.{8,20}$)[^{}[\]<|*&"()]*$', message = "Invalid format.")])
 
     submit_button = SubmitField("Submit")
 
