@@ -69,7 +69,13 @@ class SignUp(FlaskForm):
 
 #Placeholder for login form
 class LogIn(FlaskForm):
-    pass
+    email_login = StringField("Email", validators=[validators.DataRequired(message="Please enter your email"),validators.Email("Must be a valid email")],
+                             render_kw={'placeholder': "Enter your email"})
+    password_login = PasswordField("Password.", validators = [validators.DataRequired(message = "Please enter your password"),
+                validators.Length(min = 8, max = 20, message = "Must be between 8 and 20 characters"),
+                validators.Regexp(r'^(?=.*[A-Z])(?=.*[!@#$%^+=-])(?=.{8,20}$)[^{}[\]<|*&"()]*$', message = "Invalid format.")
+
+    submit_button = SubmitField("Submit")
 
 if __name__ == "__main__":
     app.run(debug = True)
