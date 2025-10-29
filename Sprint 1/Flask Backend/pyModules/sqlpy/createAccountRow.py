@@ -1,2 +1,2 @@
-from sqlalchemy import insert
+from mysql import connector
 
