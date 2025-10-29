@@ -12,6 +12,7 @@ app = Flask(__name__)
 #TO-DO: place the config secret key in an env and gitignore filegt
 app.config["SECRET_KEY"] = "Placeholder"
 csrf = CSRFProtect(app)
+bcrypt = Bcrypt(app)
 
 @app.route("/")
 def home():
@@ -33,8 +34,8 @@ def patient_signup():
             last_name = sign_up_form.last_name.data
             phone_number = sign_up_form.phone_number.data
             user_email = sign_up_form.user_email.data
-            password = sign_up_form.password.data
-            confirm_password = sign_up_form.confirm_password.data
+            hashed_password = bcrypt.generate_password_hash(sign_up_form.password.data).decode('utf-8')
+            password = hashed_password
 
     return render_template("patient_signup.html", first_name = first_name, last_name = last_name,
                         user_email = user_email, phone_number= phone_number, password = password, confirm_password = confirm_password, 
