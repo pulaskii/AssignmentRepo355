@@ -9,7 +9,7 @@ from wtforms.validators import EqualTo
 import jinja2
 
 app = Flask(__name__)
-#TO-DO: place the config secret key in an env and gitignore filegt
+#TO-DO: place the config secret key in an env and gitignore file
 app.config["SECRET_KEY"] = "Placeholder"
 csrf = CSRFProtect(app)
 bcrypt = Bcrypt(app)
@@ -18,8 +18,8 @@ bcrypt = Bcrypt(app)
 def home():
     return render_template("home.html")
 
-@app.route("/patient_signup", methods = ['GET', 'POST'])
-def patient_signup():
+@app.route("/signup_page", methods = ['GET', 'POST'])
+def signup():
     first_name = None
     last_name = None
     phone_number = None
@@ -37,7 +37,7 @@ def patient_signup():
             hashed_password = bcrypt.generate_password_hash(sign_up_form.password.data).decode('utf-8')
             password = hashed_password
 
-    return render_template("patient_signup.html", first_name = first_name, last_name = last_name,
+    return render_template("signup_page.html", first_name = first_name, last_name = last_name,
                         user_email = user_email, phone_number= phone_number, password = password, confirm_password = confirm_password, 
                            form = sign_up_form)
 
@@ -67,6 +67,10 @@ class SignUp(FlaskForm):
     ], render_kw={'placeholder': "Re-enter your password"})
 
     submit_button = SubmitField("Submit")
+
+#Placeholder for login form
+class LogIn(FlaskForm):
+    pass
 
 if __name__ == "__main__":
     app.run(debug = True)
