@@ -51,7 +51,8 @@ class SignUp(FlaskForm):
     
     phone_number = StringField("Phone number", validators = [validators.DataRequired(message = "Phone number is required"),
                                                                validators.Length(min = 10, message = "Must be at least 10 characters"),
-                                                               validators.Regexp(r'^$\d{3}$ \d{3}-\d{4}$', message = 'Invalid phone number format')
+                                                               validators.Regexp(r'^\(\d{3}\)\s?\d{3}-\d{4}$', 
+                                                            message="Invalid phone number format. Use (123) 456-7890")
                                                              ], render_kw = {'placeholder': "(000) 000-0000"})
     user_email = StringField("Email", validators = [validators.DataRequired(), validators.Email("Must be a valid email")], render_kw = {'placeholder': "example@email.com"})
     
