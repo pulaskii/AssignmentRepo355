@@ -7,6 +7,7 @@ from wtforms import StringField, PasswordField, SubmitField, validators
 from flask_wtf import FlaskForm, CSRFProtect
 from wtforms.validators import EqualTo
 import jinja2
+import mysql
 
 app = Flask(__name__)
 #TO-DO: place the config secret key in an env and gitignore file
