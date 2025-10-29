@@ -37,7 +37,7 @@ def patient_signup():
             confirm_password = sign_up_form.confirm_password.data
 
     return render_template("patient_signup.html", first_name = first_name, last_name = last_name,
-                           phone_number = phone_number, user_email = user_email, password = password, confirm_password = confirm_password, 
+                        user_email = user_email, phone_number= phone_number, password = password, confirm_password = confirm_password, 
                            form = sign_up_form)
 
 @app.route("/provider")
