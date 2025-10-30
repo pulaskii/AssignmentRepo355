@@ -12,22 +12,22 @@ import pyModules.sqlpy.connectToDB
 import pyModules.sqlpy.createAccountRow
 
 app = Flask(__name__)
-#TO-DO: place the config secret key in an env and gitignore filegt
+#TO-DO: place the config secret key in an env and gitignore file
 app.config["SECRET_KEY"] = "Placeholder"
 csrf = CSRFProtect(app)
+bcrypt = Bcrypt(app)
 
 @app.route("/")
 def home():
     return render_template("home.html")
 
-@app.route("/patient_signup", methods = ['GET', 'POST'])
-def patient_signup():
+@app.route("/signup_page", methods = ['GET', 'POST'])
+def signup():
     first_name = None
     last_name = None
     phone_number = None
     user_email = None
     password = None
-    confirm_password = None
 
     sign_up_form = SignUp()
     if request.method == "POST":
@@ -47,14 +47,26 @@ def patient_signup():
                        connectDatabase()
                        )
             addNewUserTest()
+            hashed_password = bcrypt.generate_password_hash(sign_up_form.password.data).decode('utf-8')
+            password = hashed_password
 
-    return render_template("patient_signup.html", first_name = first_name, last_name = last_name,
-                        user_email = user_email, phone_number= phone_number, password = password, confirm_password = confirm_password, 
+    return render_template("signup_page.html", first_name = first_name, last_name = last_name,
+                        user_email = user_email, phone_number= phone_number, password = password, 
                            form = sign_up_form)
 
-@app.route("/provider")
-def provider_portal():
-    return render_template("provider_homepage.html")
+@app.route("/login_page", methods = ['GET', 'POST'])
+def login():
+    email_login = None
+    password_login = None
+
+    login_form = LogIn()
+    if request.method == "POST":
+        if login_form.validate_on_submit():
+            email_login = login_form.email_login.data
+            password_login = login_form.password_login.data
+
+    return render_template("login_page.html", email_login = email_login, password_login = password_login,
+                           form = login_form)
 
 class SignUp(FlaskForm):
     first_name = StringField("Enter your first name", validators = [validators.DataRequired(message = "First name is required")], render_kw = {'placeholder': "John"})
@@ -76,6 +88,15 @@ class SignUp(FlaskForm):
     
     confirm_password = PasswordField("Confirm your password", validators = [validators.DataRequired(message="Please confirm your password")
     ], render_kw={'placeholder': "Re-enter your password"})
+
+    submit_button = SubmitField("Submit")
+
+class LogIn(FlaskForm):
+    email_login = StringField("Email", validators=[validators.DataRequired(message="Please enter your email"),validators.Email("Must be a valid email")],
+                             render_kw={'placeholder': "Enter your email"})
+    password_login = PasswordField("Password.", validators = [validators.DataRequired(message = "Please enter your password"),
+                validators.Length(min = 8, max = 20, message = "Must be between 8 and 20 characters"),
+                validators.Regexp(r'^(?=.*[A-Z])(?=.*[!@#$%^+=-])(?=.{8,20}$)[^{}[\]<|*&"()]*$', message = "Invalid format.")])
 
     submit_button = SubmitField("Submit")
 

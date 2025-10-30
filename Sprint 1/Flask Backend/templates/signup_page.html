@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Patient Signup</title>
+    <title>Signup</title>
 </head>
 <body>
     <form method = "POST">
@@ -53,7 +53,8 @@
         {{ form.submit_button() }}
     </div>
         <div>
-            <h3>Already have an account?</h3><a href="">Log in</a>
+            <h3>Already have an account?</h3>
+            <a class = "btn btn-primary" href = "{{ url_for('login') }}">Login</a>
         </div>
     </form>
 </body>
