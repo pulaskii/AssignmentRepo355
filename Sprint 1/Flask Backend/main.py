@@ -42,15 +42,16 @@ def signup():
             password = hashed_password
 
 
-            addNewUser(first_name,
+            pyModules.sqlpy.createAccountRow.addNewUser(first_name,
                        last_name,
                        user_email,
                        phone_number,
                        password,
                        "patient",
-                       connectDatabase()
+                       pyModules.sqlpy.connectToDB.connectDatabase()
                        )
-            addNewUserTest()
+            
+            pyModules.sqlpy.createAccountRow.addNewUserTest()
 
     return render_template("signup_page.html", first_name = first_name, last_name = last_name,
                         user_email = user_email, phone_number= phone_number, password = password, 
