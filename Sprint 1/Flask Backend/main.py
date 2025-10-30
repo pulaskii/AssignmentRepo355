@@ -23,6 +23,7 @@ def home():
 
 @app.route("/signup_page", methods = ['GET', 'POST'])
 def signup():
+    patient_or_provider = None
     first_name = None
     last_name = None
     phone_number = None
@@ -32,12 +33,12 @@ def signup():
     sign_up_form = SignUp()
     if request.method == "POST":
         if sign_up_form.validate_on_submit():
+            patient_or_provider = sign_up_form.patient_or_provider.data
             first_name = sign_up_form.first_name.data
             last_name = sign_up_form.last_name.data
             phone_number = sign_up_form.phone_number.data
             user_email = sign_up_form.user_email.data
             password = sign_up_form.password.data
-            confirm_password = sign_up_form.confirm_password.data
             hashed_password = bcrypt.generate_password_hash(sign_up_form.password.data).decode('utf-8')
             password = hashed_password
 
@@ -47,13 +48,11 @@ def signup():
                        user_email,
                        phone_number,
                        password,
-                       "patient",
+                       patient_or_provider,
                        pyModules.sqlpy.connectToDB.connectDatabase()
                        )
-            
-            pyModules.sqlpy.createAccountRow.addNewUserTest()
 
-    return render_template("signup_page.html", first_name = first_name, last_name = last_name,
+    return render_template("signup_page.html", patient_or_provider = patient_or_provider, first_name = first_name, last_name = last_name,
                         user_email = user_email, phone_number= phone_number, password = password, 
                            form = sign_up_form)
 
