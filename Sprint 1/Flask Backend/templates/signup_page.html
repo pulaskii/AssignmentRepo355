@@ -5,8 +5,17 @@
     <title>Signup</title>
 </head>
 <body>
+
     <form method = "POST">
         {{ form.hidden_tag() }}
+ <div>
+     {{ form.patient_or_provider.label }}
+     {% for subfield in form.patient_or_provider %}
+        <div>
+            {{ subfield }}{{ subfield.label }}
+        </div>
+     {% endfor %}
+ </div>
  <div>
         {{ form.first_name.label }} {{ form.first_name(size=32) }}
         {% for error in form.first_name.errors %}

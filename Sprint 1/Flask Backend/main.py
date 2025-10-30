@@ -3,9 +3,9 @@ from flask_bcrypt import Bcrypt
 from flask_bootstrap import Bootstrap
 from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
-from wtforms import StringField, PasswordField, SubmitField, validators
+from wtforms import StringField, PasswordField, SubmitField, RadioField, validators
 from flask_wtf import FlaskForm, CSRFProtect
-from wtforms.validators import EqualTo
+from wtforms.validators import EqualTo, InputRequired
 import jinja2
 import mysql
 
@@ -56,6 +56,8 @@ def login():
                            form = login_form)
 
 class SignUp(FlaskForm):
+    patient_or_provider = RadioField("Are you a patient or a provider?", choices=[('option_patient', 'Patient'), ('option_provider', 'Provider')], validators=[InputRequired()])
+
     first_name = StringField("Enter your first name", validators = [validators.DataRequired(message = "First name is required")], render_kw = {'placeholder': "John"})
     
     last_name = StringField("Enter your last name", validators = [validators.DataRequired(message = "Last name is required")], render_kw = {'placeholder': "Doe"})
