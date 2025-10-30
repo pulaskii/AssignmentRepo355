@@ -41,6 +41,7 @@ def signup():
             hashed_password = bcrypt.generate_password_hash(sign_up_form.password.data).decode('utf-8')
             password = hashed_password
 
+
             addNewUser(first_name,
                        last_name,
                        user_email,
