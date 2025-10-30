@@ -38,6 +38,9 @@ def signup():
             user_email = sign_up_form.user_email.data
             password = sign_up_form.password.data
             confirm_password = sign_up_form.confirm_password.data
+            hashed_password = bcrypt.generate_password_hash(sign_up_form.password.data).decode('utf-8')
+            password = hashed_password
+
             addNewUser(first_name,
                        last_name,
                        user_email,
@@ -47,8 +50,6 @@ def signup():
                        connectDatabase()
                        )
             addNewUserTest()
-            hashed_password = bcrypt.generate_password_hash(sign_up_form.password.data).decode('utf-8')
-            password = hashed_password
 
     return render_template("signup_page.html", first_name = first_name, last_name = last_name,
                         user_email = user_email, phone_number= phone_number, password = password, 
