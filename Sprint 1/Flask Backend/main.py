@@ -8,6 +8,8 @@ from flask_wtf import FlaskForm, CSRFProtect
 from wtforms.validators import EqualTo
 import jinja2
 import mysql
+import pyModules.sqlpy.connectToDB 
+import pyModules.sqlpy.createAccountRow
 
 app = Flask(__name__)
 #TO-DO: place the config secret key in an env and gitignore filegt
@@ -36,6 +38,15 @@ def patient_signup():
             user_email = sign_up_form.user_email.data
             password = sign_up_form.password.data
             confirm_password = sign_up_form.confirm_password.data
+            addNewUser(first_name,
+                       last_name,
+                       user_email,
+                       phone_number,
+                       password,
+                       "patient",
+                       connectDatabase()
+                       )
+            addNewUserTest()
 
     return render_template("patient_signup.html", first_name = first_name, last_name = last_name,
                         user_email = user_email, phone_number= phone_number, password = password, confirm_password = confirm_password, 

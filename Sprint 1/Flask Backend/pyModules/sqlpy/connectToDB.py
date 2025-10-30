@@ -4,7 +4,7 @@ from mysql import connector
 def connectDatabase(user = "root", 
                     password = "password", 
                     host = "127.0.0.1", 
-                    database = "db", 
+                    database = "MedicalRecords", 
                     raiseOnWarnings = True
                     ):
 
