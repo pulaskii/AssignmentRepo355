@@ -6,6 +6,7 @@ CREATE TABLE Users (
     MiddleNameOrInitial VARCHAR(50) NOT NULL,
     LastName VARCHAR(50),
 
+    PasswordPlaintextTemp  VARCHAR(100) NOT NULL,
     PasswordHash VARCHAR(100) NOT NULL,
 
     Age INT CHECK(Age >= 18 AND Age <= 99),
