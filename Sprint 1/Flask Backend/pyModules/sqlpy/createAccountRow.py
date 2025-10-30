@@ -10,11 +10,11 @@ def addNewUser( firstName,
                 ):
     
     addUser = ("INSERT INTO Users"
-                 "(Email, FirstName, LastName, PasswordPlaintextTemp, Phone, PatientOrDoctor)"
+                 "(Email, FirstName, LastName, Password, Phone, PatientOrDoctor)"
                  "VALUES ((%(EmailVal)s)," \
                  "(%(FirstNameVal)s)," \
                  "(%(LastNameVal)s)," \
-                 "(%(PasswordPlantextTempVal)s)," \
+                 "(%(PasswordVal)s)," \
                  "(%(PhoneVal)s)," \
                  "(%(PatientOrDoctorVal)s))"
     )
@@ -23,7 +23,7 @@ def addNewUser( firstName,
     'EmailVal': userEmail,
     'FirstNameVal': firstName,
     'LastNameVal': lastName,
-    'PasswordPlantextTempVal': password,
+    'PasswordVal': password,
     'PhoneVal': phoneNumber,
     'PatientOrDoctorVal': patientOrDoctor
     }
