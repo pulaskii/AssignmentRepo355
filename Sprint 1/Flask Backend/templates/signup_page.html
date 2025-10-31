@@ -5,8 +5,19 @@
     <title>Signup</title>
 </head>
 <body>
+    <h2>Enter your information below</h2>
     <form method = "POST">
         {{ form.hidden_tag() }}
+ <div>
+     {{ form.patient_or_provider.label }}
+     {% for subfield in form.patient_or_provider %}
+        <div>
+            <strong>
+            {{ subfield }}{{ subfield.label }}
+            </strong>
+        </div>
+     {% endfor %}
+ </div>
  <div>
         {{ form.first_name.label }} {{ form.first_name(size=32) }}
         {% for error in form.first_name.errors %}
@@ -48,7 +59,7 @@
             <span style="color: red;">{{ error }}</span>
         {% endfor %}
     </div>
-    
+    <br>
     <div>
         {{ form.submit_button() }}
     </div>
@@ -56,6 +67,12 @@
             <h3>Already have an account?</h3>
             <a class = "btn btn-primary" href = "{{ url_for('login') }}">Login</a>
         </div>
+        <br>
     </form>
+<div>
+    <a href = "{{ url_for('home') }}">
+        <button>Back</button>
+    </a>
+</div>
 </body>
 </html>

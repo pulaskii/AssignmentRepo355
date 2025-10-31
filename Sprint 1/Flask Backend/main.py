@@ -3,9 +3,9 @@ from flask_bcrypt import Bcrypt
 from flask_bootstrap import Bootstrap
 from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
-from wtforms import StringField, PasswordField, SubmitField, validators
+from wtforms import StringField, PasswordField, SubmitField, RadioField, validators
 from flask_wtf import FlaskForm, CSRFProtect
-from wtforms.validators import EqualTo
+from wtforms.validators import EqualTo, InputRequired
 import jinja2
 import mysql
 import pyModules.sqlpy.connectToDB 
@@ -23,6 +23,7 @@ def home():
 
 @app.route("/signup_page", methods = ['GET', 'POST'])
 def signup():
+    patient_or_provider = None
     first_name = None
     last_name = None
     phone_number = None
@@ -32,27 +33,26 @@ def signup():
     sign_up_form = SignUp()
     if request.method == "POST":
         if sign_up_form.validate_on_submit():
+            patient_or_provider = sign_up_form.patient_or_provider.data
             first_name = sign_up_form.first_name.data
             last_name = sign_up_form.last_name.data
             phone_number = sign_up_form.phone_number.data
             user_email = sign_up_form.user_email.data
             password = sign_up_form.password.data
-            confirm_password = sign_up_form.confirm_password.data
             hashed_password = bcrypt.generate_password_hash(sign_up_form.password.data).decode('utf-8')
             password = hashed_password
 
 
-            addNewUser(first_name,
+            pyModules.sqlpy.createAccountRow.addNewUser(first_name,
                        last_name,
                        user_email,
                        phone_number,
                        password,
-                       "patient",
-                       connectDatabase()
+                       patient_or_provider,
+                       pyModules.sqlpy.connectToDB.connectDatabase()
                        )
-            addNewUserTest()
 
-    return render_template("signup_page.html", first_name = first_name, last_name = last_name,
+    return render_template("signup_page.html", patient_or_provider = patient_or_provider, first_name = first_name, last_name = last_name,
                         user_email = user_email, phone_number= phone_number, password = password, 
                            form = sign_up_form)
 
@@ -71,6 +71,8 @@ def login():
                            form = login_form)
 
 class SignUp(FlaskForm):
+    patient_or_provider = RadioField("Are you a patient or a provider?", choices=[('option_patient', 'Patient'), ('option_provider', 'Provider')], validators=[InputRequired()])
+
     first_name = StringField("Enter your first name", validators = [validators.DataRequired(message = "First name is required")], render_kw = {'placeholder': "John"})
     
     last_name = StringField("Enter your last name", validators = [validators.DataRequired(message = "Last name is required")], render_kw = {'placeholder': "Doe"})
@@ -98,7 +100,7 @@ class LogIn(FlaskForm):
                              render_kw={'placeholder': "Enter your email"})
     password_login = PasswordField("Password.", validators = [validators.DataRequired(message = "Please enter your password"),
                 validators.Length(min = 8, max = 20, message = "Must be between 8 and 20 characters"),
-                validators.Regexp(r'^(?=.*[A-Z])(?=.*[!@#$%^+=-])(?=.{8,20}$)[^{}[\]<|*&"()]*$', message = "Invalid format.")])
+                validators.Regexp(r'^(?=.*[A-Z])(?=.*[!@#$%^+=-])(?=.{8,20}$)[^{}[\]<|*&"()]*$', message = "Invalid format.")], render_kw={'placeholder': "Enter your password"})
 
     submit_button = SubmitField("Submit")
 

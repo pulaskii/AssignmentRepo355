@@ -5,6 +5,7 @@
     <title>Login</title>
 </head>
 <body>
+    <h2>Welcome back</h2>
     <form method = "POST">
         {{ form.hidden_tag() }}
     <div>
@@ -20,7 +21,7 @@
             <span style="color: red;">{{ error }}</span>
         {% endfor %}
     </div>
-    
+    <br>
     <div>
         {{ form.submit_button() }}
     </div>
@@ -30,5 +31,9 @@
         <a class = "btn btn-primary" href = "{{ url_for('signup') }}">Sign Up</a>
     </div>
     </form>
+    <br>
+    <a href = "{{ url_for('home') }}">
+        <button>Back</button>
+    </a>
 </body>
 </html>

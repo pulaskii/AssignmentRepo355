@@ -16,7 +16,7 @@ def addNewUser( firstName,
                  "(%(LastNameVal)s)," \
                  "(%(PasswordVal)s)," \
                  "(%(PhoneVal)s)," \
-                 "(%(PatientOrDoctorVal)s))"
+                 "(%(PatientOrDoctorVal)s))" #PatientOrDocotorVal will be equal to either "option_patient" or "option_provider"
     )
 
     dataUser = {
