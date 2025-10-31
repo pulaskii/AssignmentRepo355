@@ -10,7 +10,7 @@ CREATE TABLE Users (
 
     Age INT CHECK(Age >= 18 AND Age <= 99),
     Phone INT(10),
-    PatientOrDoctor VARCHAR(7) CHECK(PatientOrDoctor == 'patient' or PatientOrDoctor == 'doctor')
+    PatientOrProvider VARCHAR(8) CHECK(PatientOrProvider == 'Patient' or PatientOrProvider == 'Provider')
 )
 
 
