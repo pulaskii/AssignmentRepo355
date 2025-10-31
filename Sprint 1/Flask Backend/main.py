@@ -1,7 +1,5 @@
 from flask import Flask, render_template, request
 from flask_bcrypt import Bcrypt
-from flask_login import LoginManager
-from flask_sqlalchemy import SQLAlchemy
 from wtforms import StringField, PasswordField, SubmitField, RadioField, validators
 from flask_wtf import FlaskForm, CSRFProtect
 from wtforms.validators import EqualTo, InputRequired
