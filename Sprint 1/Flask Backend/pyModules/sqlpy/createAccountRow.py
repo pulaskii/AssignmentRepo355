@@ -19,7 +19,7 @@ def addNewUser( firstName,
                  "(%(LastNameVal)s)," \
                  "(%(PasswordVal)s)," \
                  "(%(PhoneVal)s)," \
-                 "(%(PatientOrProviderVal)s))" #PatientOrDocotorVal will be equal to either "option_patient" or "option_provider"
+                 "(%(PatientOrProviderVal)s))"
     )   
 
 
