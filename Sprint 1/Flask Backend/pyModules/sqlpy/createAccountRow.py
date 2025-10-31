@@ -1,4 +1,5 @@
 from mysql import connector
+from mysql.connector import errorcode
 
 def addNewUser( firstName,
                 lastName,
@@ -9,6 +10,8 @@ def addNewUser( firstName,
                 dbConnection 
                 ):
     
+    returnVal = 1
+
     addUser = ("INSERT INTO Users"
                  "(Email, FirstName, LastName, PasswordHash, Phone, PatientOrProvider)"
                  "VALUES ((%(EmailVal)s)," \
@@ -16,14 +19,8 @@ def addNewUser( firstName,
                  "(%(LastNameVal)s)," \
                  "(%(PasswordVal)s)," \
                  "(%(PhoneVal)s)," \
-                 "(%(PatientOrProviderVal)s))" #PatientOrDocotorVal will be equal to either "option_patient" or "option_provider"
+                 "(%(PatientOrProviderVal)s))"
     )   
-    
-    if PatientOrProvider == "option_patient":
-        PatientOrProvider = "Patient"
-    elif PatientOrProvider == "option_Provider":
-        PatientOrProvider = "Provider"
-
 
 
     dataUser = {
@@ -38,14 +35,22 @@ def addNewUser( firstName,
 
     cursor = dbConnection.cursor()
 
-    cursor.execute(addUser, dataUser)
-    cursor.commit()
+    try:
+        cursor.execute(addUser, dataUser)
+    except  mysql.connector.Error as err:
+        if err.errno == 1062:
+            returnVal = 2
+    
+    try:
+        cursor.commit()
+    except  mysql.connector.Error as err:
+        if err.errno == 1062:
+            returnVal = 3
 
     cursor.close()
-
     dbConnection.close()
 
-    return 1
+    return returnVal
 
 
 def addNewUserTest():
