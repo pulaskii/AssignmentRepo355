@@ -39,13 +39,13 @@ def addNewUser( firstName,
         cursor.execute(addUser, dataUser)
     except  mysql.connector.Error as err:
         if err.errno == 1062:
-            returnVal = 3
+            returnVal = 2
     
     try:
         cursor.commit()
     except  mysql.connector.Error as err:
         if err.errno == 1062:
-            returnVal = 2
+            returnVal = 3
 
     cursor.close()
     dbConnection.close()
