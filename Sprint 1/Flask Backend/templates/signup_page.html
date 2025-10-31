@@ -12,7 +12,9 @@
      {{ form.patient_or_provider.label }}
      {% for subfield in form.patient_or_provider %}
         <div>
+            <strong>
             {{ subfield }}{{ subfield.label }}
+            </strong>
         </div>
      {% endfor %}
  </div>
