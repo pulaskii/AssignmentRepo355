@@ -5,19 +5,26 @@ def addNewUser( firstName,
                 userEmail,
                 phoneNumber,
                 password,
-                patientOrDoctor,
+                PatientOrProvider,
                 dbConnection 
                 ):
     
     addUser = ("INSERT INTO Users"
-                 "(Email, FirstName, LastName, Password, Phone, PatientOrDoctor)"
+                 "(Email, FirstName, LastName, PasswordHash, Phone, PatientOrProvider)"
                  "VALUES ((%(EmailVal)s)," \
                  "(%(FirstNameVal)s)," \
                  "(%(LastNameVal)s)," \
                  "(%(PasswordVal)s)," \
                  "(%(PhoneVal)s)," \
-                 "(%(PatientOrDoctorVal)s))" #PatientOrDocotorVal will be equal to either "option_patient" or "option_provider"
-    )
+                 "(%(PatientOrProviderVal)s))" #PatientOrDocotorVal will be equal to either "option_patient" or "option_provider"
+    )   
+    
+    if PatientOrProvider == "option_patient":
+        PatientOrProvider = "Patient"
+    elif PatientOrProvider == "option_Provider":
+        PatientOrProvider = "Provider"
+
+
 
     dataUser = {
     'EmailVal': userEmail,
@@ -25,7 +32,7 @@ def addNewUser( firstName,
     'LastNameVal': lastName,
     'PasswordVal': password,
     'PhoneVal': phoneNumber,
-    'PatientOrDoctorVal': patientOrDoctor
+    'PatientOrProviderVal': PatientOrProvider
     }
 
 
