@@ -21,12 +21,6 @@ def addNewUser( firstName,
                  "(%(PhoneVal)s)," \
                  "(%(PatientOrProviderVal)s))" #PatientOrDocotorVal will be equal to either "option_patient" or "option_provider"
     )   
-    
-    if PatientOrProvider == "option_patient":
-        PatientOrProvider = "Patient"
-    elif PatientOrProvider == "option_Provider":
-        PatientOrProvider = "Provider"
-
 
 
     dataUser = {

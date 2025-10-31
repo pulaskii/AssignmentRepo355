@@ -71,7 +71,7 @@ def login():
                            form = login_form)
 
 class SignUp(FlaskForm):
-    patient_or_provider = RadioField("Are you a patient or a provider?", choices=[('option_patient', 'Patient'), ('option_provider', 'Provider')], validators=[InputRequired()])
+    patient_or_provider = RadioField("Are you a patient or a provider?", choices=[('Patient', 'Patient'), ('Provider', 'Provider')], validators=[InputRequired()])
 
     first_name = StringField("Enter your first name", validators = [validators.DataRequired(message = "First name is required")], render_kw = {'placeholder': "John"})
     
