@@ -5,7 +5,7 @@
     <title>Signup</title>
 </head>
 <body>
-
+    <h2>Enter your information below</h2>
     <form method = "POST">
         {{ form.hidden_tag() }}
  <div>
@@ -57,7 +57,7 @@
             <span style="color: red;">{{ error }}</span>
         {% endfor %}
     </div>
-    
+    <br>
     <div>
         {{ form.submit_button() }}
     </div>
