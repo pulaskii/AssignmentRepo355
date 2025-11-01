@@ -1,4 +1,4 @@
-CREATE TABLE Users (
+CREATE TABLE users (
     Email VARCHAR(50) PRIMARY KEY,
         IsRegistered BOOLEAN,
 
