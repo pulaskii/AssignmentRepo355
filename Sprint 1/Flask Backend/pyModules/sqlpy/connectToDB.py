@@ -9,10 +9,10 @@ def connectDatabase(user = "root",
                     ):
 
     connectionConfig = {
-    'user': '{user}',
-    'password': '{password}',
-    'host': '{host}',
-    'database': '{database}',
+    'user': user,
+    'password': password,
+    'host': host,
+    'database': database,
     'raise_on_warnings': raiseOnWarnings
     }
 
