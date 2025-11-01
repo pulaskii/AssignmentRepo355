@@ -1,8 +1,5 @@
 from flask import Flask, render_template, request
 from flask_bcrypt import Bcrypt
-from flask_bootstrap import Bootstrap
-from flask_login import LoginManager
-from flask_sqlalchemy import SQLAlchemy
 from wtforms import StringField, PasswordField, SubmitField, RadioField, validators
 from flask_wtf import FlaskForm, CSRFProtect
 from wtforms.validators import EqualTo, InputRequired
@@ -10,10 +7,12 @@ import jinja2
 import mysql
 import pyModules.sqlpy.connectToDB 
 import pyModules.sqlpy.createAccountRow
+import os
+from dotenv import load_dotenv
 
 app = Flask(__name__)
-#TO-DO: place the config secret key in an env and gitignore file
-app.config["SECRET_KEY"] = "Placeholder"
+load_dotenv()
+app.config["SECRET_KEY"] = os.getenv("CONFIG_KEY")
 csrf = CSRFProtect(app)
 bcrypt = Bcrypt(app)
 
@@ -71,7 +70,7 @@ def login():
                            form = login_form)
 
 class SignUp(FlaskForm):
-    patient_or_provider = RadioField("Are you a patient or a provider?", choices=[('option_patient', 'Patient'), ('option_provider', 'Provider')], validators=[InputRequired()])
+    patient_or_provider = RadioField("Are you a patient or a provider?", choices=[('Patient', 'Patient'), ('Provider', 'Provider')], validators=[InputRequired()])
 
     first_name = StringField("Enter your first name", validators = [validators.DataRequired(message = "First name is required")], render_kw = {'placeholder': "John"})
     
