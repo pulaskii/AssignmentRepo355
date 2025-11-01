@@ -3,14 +3,16 @@ CREATE TABLE Users (
     IsRegistered BOOLEAN,
 
     FirstName VARCHAR(50) NOT NULL,
-    MiddleNameOrInitial VARCHAR(50),
+    MiddleNameOrInitial VARCHAR(50) NOT NULL,
     LastName VARCHAR(50),
 
     PasswordHash VARCHAR(100) NOT NULL,
 
     Age INT,
+    CHECK(Age >= 18 AND Age <= 99),
     
-    Phone VARCHAR(15),
+    Phone INT,
     
-    PatientOrProvider VARCHAR(8)
+    PatientOrProvider VARCHAR(8),
+    CHECK(PatientOrProvider = 'Patient' or PatientOrProvider = 'Provider')
 )
