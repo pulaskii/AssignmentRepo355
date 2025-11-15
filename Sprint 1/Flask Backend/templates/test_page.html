@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.js"></script>
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.js";
+    console.log('pdfjsLib:', typeof pdfjsLib); // should print 'object'
+  </script>
+</head>
+<body>
+  PDF.js loaded successfully if console shows 'object'.
+</body>
+</html>

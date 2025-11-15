@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, send_from_directory
 from flask_bcrypt import Bcrypt
 from wtforms import StringField, PasswordField, SubmitField, RadioField, validators
 from flask_wtf import FlaskForm, CSRFProtect
@@ -71,7 +71,7 @@ def login():
             #If validated and the user is a patient, redirect to patient page
             #Jo work your magic
 
-            return redirect(url_for(""))
+            return redirect(url_for())
 
     return render_template("login_page.html", email_login = email_login, password_login = password_login,
                            form = login_form)
@@ -79,6 +79,23 @@ def login():
 @app.route("/edit_record_page")
 def edit_record_page():
     return render_template("edit_record_page.html")
+
+@app.route("/edit_text")
+def edit_text():
+    return send_from_directory("templates", "edit_record_page.html")
+
+@app.route("/save_document", methods=["POST"])
+def save_document():
+    text = request.data.decode("utf-8")  # get raw text
+    
+    #TODO save the updated text file to the SQL database here instead of overwriting a static file
+    file_path = os.path.join(app.static_folder, "document.txt")
+    try:
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write(text)
+        return "OK", 200
+    except Exception as e:
+        return str(e), 500
 
 class SignUp(FlaskForm):
     patient_or_provider = RadioField("Are you a patient or a provider?", choices=[('Patient', 'Patient'), ('Provider', 'Provider')], validators=[InputRequired()])
