@@ -80,10 +80,6 @@ def login():
 def edit_record_page():
     return render_template("edit_record_page.html")
 
-@app.route("/edit_text")
-def edit_text():
-    return send_from_directory("templates", "edit_record_page.html")
-
 @app.route("/save_document", methods=["POST"])
 def save_document():
     text = request.data.decode("utf-8")  # get raw text

@@ -2,6 +2,11 @@
 <html>
 <head>
   <style>
+    #saveBtn, #undoBtn, #downloadBtn, #uploadBtn {
+      padding: 10px 20px;
+      font-size: 16px;
+    }
+
     #editor {
       width: 80%;
       height: 500px;
@@ -10,30 +15,43 @@
       font-family: monospace;
       font-size: 16px;
     }
-    #saveBtn {
-      display: block;
+
+    .button-container {
+      width: 80%;
       margin: 0 auto;
-      padding: 10px 20px;
-      font-size: 16px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    #undoBtn, #downloadBtn, #uploadBtn {
+      margin-right: 10px;
     }
   </style>
 </head>
 <body>
 
-<h2 style="text-align:center;">Text Editor</h2>
+<div class="button-container">
+  <!-- TODO: Need to add back button here to go back to the view patients page -->
+  <button id="downloadBtn">Download</button>
+  <button id="uploadBtn">Upload</button>
+  <button id="undoBtn">Undo</button>
+  <button id="saveBtn">Save</button>
+</div>
+
 <textarea id="editor">Loading...</textarea>
-<button id="saveBtn">Save</button>
 
 <script>
 const editor = document.getElementById('editor');
+let originalText = "";
 
 // Load the text file when the page loads
 async function loadTextFile() {
   try {
-    const response = await fetch('/static/document.txt'); // from server static folder
+    const response = await fetch('/static/document.txt');
     if (!response.ok) throw new Error('Failed to load file');
     const text = await response.text();
     editor.value = text;
+    originalText = text; // store original content for rollback
   } catch (err) {
     editor.value = "Error loading file: " + err;
   }
@@ -41,6 +59,9 @@ async function loadTextFile() {
 
 // Save the text file to the server
 async function saveTextFile() {
+  const confirmSave = confirm("Are you sure you want to save all changes?");
+  if (!confirmSave) return;
+
   try {
     const text = editor.value;
     const response = await fetch('/save_document', {
@@ -53,15 +74,63 @@ async function saveTextFile() {
     });
 
     if (!response.ok) throw new Error('Failed to save file');
+
+    originalText = text; // update original content after save
   } catch (err) {
     alert('Error saving file: ' + err);
   }
 }
 
+// Undo changes
+function undoChanges() {
+  const confirmUndo = confirm("Are you sure you want to rollback all changes?");
+  if (!confirmUndo) return;
+
+  editor.value = originalText; // revert to original
+}
+
+// Download the current text as a file
+function downloadTextFile() {
+  const text = editor.value;
+  const blob = new Blob([text], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'Record.txt';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// Upload a text-based file
+function uploadTextFile() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = `.txt`; // Only accept txt files
+
+  input.onchange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = event => {
+      const confirmUpload = confirm("Are you sure you want to load this file? Unsaved changes will be lost.");
+      if (confirmUpload) editor.value = event.target.result;
+    };
+    reader.readAsText(file);
+  };
+
+  input.click();
+}
+
 window.addEventListener('load', loadTextFile);
 document.getElementById('saveBtn').addEventListener('click', saveTextFile);
+document.getElementById('undoBtn').addEventListener('click', undoChanges);
+document.getElementById('downloadBtn').addEventListener('click', downloadTextFile);
+document.getElementById('uploadBtn').addEventListener('click', uploadTextFile);
 </script>
-
 
 </body>
 </html>
