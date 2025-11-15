@@ -2,7 +2,7 @@
 <html>
 <head>
   <style>
-    #saveBtn, #undoBtn, #downloadBtn, #uploadBtn {
+    #saveBtn, #undoBtn, #downloadBtn, #uploadBtn, #backBtn {
       padding: 10px 20px;
       font-size: 16px;
     }
@@ -23,7 +23,7 @@
       margin-bottom: 20px;
     }
 
-    #undoBtn, #downloadBtn, #uploadBtn {
+    #undoBtn, #downloadBtn, #uploadBtn, #backBtn {
       margin-right: 10px;
     }
   </style>
@@ -31,7 +31,7 @@
 <body>
 
 <div class="button-container">
-  <!-- TODO: Need to add back button here to go back to the view patients page -->
+  <button id="backBtn">Back</button>
   <button id="downloadBtn">Download</button>
   <button id="uploadBtn">Upload</button>
   <button id="undoBtn">Undo</button>
@@ -125,11 +125,14 @@ function uploadTextFile() {
   input.click();
 }
 
-window.addEventListener('load', loadTextFile);
+document.getElementById('backBtn').addEventListener('click', () => {
+  window.location.href = 'login_page'; //TODO: Change to view patients page
+});
 document.getElementById('saveBtn').addEventListener('click', saveTextFile);
 document.getElementById('undoBtn').addEventListener('click', undoChanges);
 document.getElementById('downloadBtn').addEventListener('click', downloadTextFile);
 document.getElementById('uploadBtn').addEventListener('click', uploadTextFile);
+window.addEventListener('load', loadTextFile);
 </script>
 
 </body>
