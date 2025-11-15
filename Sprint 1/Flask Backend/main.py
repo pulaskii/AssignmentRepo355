@@ -67,7 +67,7 @@ def login():
             password_login = login_form.password_login.data
 
             #TODO: We need to validate the email and password against the database here
-            #If validated and the user is a docotor, redirect to doctor page
+            #If validated and the user is a doctor, redirect to doctor page
             #If validated and the user is a patient, redirect to patient page
             #Jo work your magic
 
@@ -92,6 +92,10 @@ def save_document():
         return "OK", 200
     except Exception as e:
         return str(e), 500
+
+@app.route('/provider_portal')
+def provider():
+    return render_template('provider_homepage.html')
 
 class SignUp(FlaskForm):
     patient_or_provider = RadioField("Are you a patient or a provider?", choices=[('Patient', 'Patient'), ('Provider', 'Provider')], validators=[InputRequired()])
