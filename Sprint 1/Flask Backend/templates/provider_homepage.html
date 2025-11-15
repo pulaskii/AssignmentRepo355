@@ -54,6 +54,10 @@
     const patient_header = document.getElementById('patient_header');
     const patient_list = document.getElementById('patient_list');
     const back_button = document.getElementById('back_button');
+    
+    document.getElementById('edit_button').addEventListener('click', () => {
+        window.location.href = 'edit_record_page';
+    });
 
 
     view_patients_button.addEventListener('click', () => {

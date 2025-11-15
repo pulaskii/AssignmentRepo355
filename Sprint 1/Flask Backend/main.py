@@ -71,7 +71,7 @@ def login():
             #If validated and the user is a patient, redirect to patient page
             #Jo work your magic
 
-            return redirect(url_for("edit_record_page")) #TODO: Change to doctor or patient page based on login
+            return redirect(url_for("provider"))
         
     return render_template("login_page.html", email_login = email_login, password_login = password_login,
                            form = login_form)
