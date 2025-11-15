@@ -50,6 +50,7 @@ def signup():
                        patient_or_provider,
                        pyModules.sqlpy.connectToDB.connectDatabase()
                        )
+            return redirect(url_for("provider_homepage"))
 
     return render_template("signup_page.html", patient_or_provider = patient_or_provider, first_name = first_name, last_name = last_name,
                         user_email = user_email, phone_number = phone_number, password = password, 
@@ -71,7 +72,7 @@ def login():
             #If validated and the user is a patient, redirect to patient page
             #Jo work your magic
 
-            return redirect(url_for(""))
+            return redirect(url_for("edit_record_page"))
 
     return render_template("login_page.html", email_login = email_login, password_login = password_login,
                            form = login_form)
@@ -113,6 +114,10 @@ class LogIn(FlaskForm):
                 validators.Regexp(r'^(?=.*[A-Z])(?=.*[!@#$%^+=-])(?=.{8,20}$)[^{}[\]<|*&"()]*$', message = "Invalid format.")], render_kw={'placeholder': "Enter your password"})
 
     submit_button = SubmitField("Submit")
+
+@app.route("/provider")
+def provider():
+    return render_template("provider_homepage.html")
 
 if __name__ == "__main__":
     app.run(debug = True)

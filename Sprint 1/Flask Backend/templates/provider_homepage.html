@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Provider Portal</title>
+    <style>
+        .patient-list {
+            height: 150px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Provider Portal</h1>
+
+    <div>
+        <button id ="view_patients_button">View Patients</button>
+    </div>
+
+    <h3 id="patient_header" hidden>Patients:</h3>
+
+    <div class="patient-list" id="patient_list" hidden>
+        <div>Patient 1</div>
+        <div>Patient 2</div>
+        <div>Patient 3</div>
+        <div>Patient 4</div>
+        <div>Patient 5</div>
+        <div>Patient 6</div>
+        <div>Patient 7</div>
+        <div>Patient 8</div>
+        <div>Patient 9</div>
+        <div>Patient 10</div>
+    </div>
+
+    <div class="actions">
+        <button id="view_button" hidden>View</button>
+        <button id="edit_button" hidden>Edit</button>
+        <button id="remove_button" hidden>Remove</button>
+    </div>
+
+    <br>
+
+    <div>
+        <button id="back_button" hidden>Back</button>
+    </div>
+
+    <script>
+    const view_patients_button = document.getElementById('view_patients_button');
+    const view_button = document.getElementById('view_button');
+    const edit_button = document.getElementById('edit_button');
+    const remove_button = document.getElementById('remove_button');
+    const patient_header = document.getElementById('patient_header');
+    const patient_list = document.getElementById('patient_list');
+    const back_button = document.getElementById('back_button');
+
+
+    view_patients_button.addEventListener('click', () => {
+
+      patient_list.hidden = false;
+      patient_header.hidden = false;
+      view_button.hidden = false;
+      edit_button.hidden = false;
+      remove_button.hidden = false;
+
+      view_patients_button.style.display = 'none';
+
+      back_button.hidden = false;
+    });
+
+    back_button.addEventListener('click', () => {
+
+      patient_list.hidden = true;
+      patient_header.hidden = true;
+      view_button.hidden = true;
+      edit_button.hidden = true;
+      remove_button.hidden = true;
+
+      view_patients_button.style.display = '';
+
+      back_button.hidden = false;
+    });
+
+    </script>
+
+</body>
+</html>
