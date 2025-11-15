@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect, url_for
 from flask_bcrypt import Bcrypt
 from wtforms import StringField, PasswordField, SubmitField, RadioField, validators
 from flask_wtf import FlaskForm, CSRFProtect
@@ -52,7 +52,7 @@ def signup():
                        )
 
     return render_template("signup_page.html", patient_or_provider = patient_or_provider, first_name = first_name, last_name = last_name,
-                        user_email = user_email, phone_number= phone_number, password = password, 
+                        user_email = user_email, phone_number = phone_number, password = password, 
                            form = sign_up_form)
 
 @app.route("/login_page", methods = ['GET', 'POST'])
@@ -66,8 +66,19 @@ def login():
             email_login = login_form.email_login.data
             password_login = login_form.password_login.data
 
+            #TODO: We need to validate the email and password against the database here
+            #If validated and the user is a docotor, redirect to doctor page
+            #If validated and the user is a patient, redirect to patient page
+            #Jo work your magic
+
+            return redirect(url_for(""))
+
     return render_template("login_page.html", email_login = email_login, password_login = password_login,
                            form = login_form)
+
+@app.route("/edit_record_page")
+def edit_record_page():
+    return render_template("edit_record_page.html")
 
 class SignUp(FlaskForm):
     patient_or_provider = RadioField("Are you a patient or a provider?", choices=[('Patient', 'Patient'), ('Provider', 'Provider')], validators=[InputRequired()])

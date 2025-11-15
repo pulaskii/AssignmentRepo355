@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>PDF Editor</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+  <style>
+    #pdf-container { position: relative; display: inline-block; }
+    #text-layer {
+      position: absolute;
+      top: 0; left: 0;
+      pointer-events: none; /* text cannot block PDF clicks */
+    }
+    .text-input {
+      position: absolute;
+      pointer-events: auto;
+      background: rgba(255,255,255,0.7);
+      border: 1px solid black;
+    }
+  </style>
+</head>
+
+<body>
+  <h2>PDF Editor</h2>
+
+  <input type="file" id="load-pdf">
+  <div id="pdf-container">
+    <canvas id="pdf-canvas"></canvas>
+    <div id="text-layer"></div>
+  </div>
+
+  <button onclick="addTextBox()">Add Text</button>
+  <button onclick="savePDF()">Save PDF</button>
+
+<script>
+let pdfBytes;
+let pdfDoc;
+
+document.getElementById("load-pdf").addEventListener("change", async function(e) {
+    const file = e.target.files[0];
+    pdfBytes = await file.arrayBuffer();
+
+    // load PDF.js
+    const loadingTask = pdfjsLib.getDocument({ data: pdfBytes });
+    loadingTask.promise.then(async pdf => {
+        const page = await pdf.getPage(1);
+        const viewport = page.getViewport({ scale: 1.5 });
+
+        const canvas = document.getElementById("pdf-canvas");
+        const context = canvas.getContext("2d");
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+
+        await page.render({ canvasContext: context, viewport: viewport }).promise;
+
+        // prepare pdf-lib for saving
+        pdfDoc = await PDFLib.PDFDocument.load(pdfBytes);
+    });
+});
+
+function addTextBox() {
+    const textLayer = document.getElementById("text-layer");
+    const input = document.createElement("input");
+    input.type = "text";
+    input.className = "text-input";
+    input.style.top = "50px";
+    input.style.left = "50px";
+    input.style.width = "200px";
+    textLayer.appendChild(input);
+}
+
+async function savePDF() {
+    const inputs = document.getElementsByClassName("text-input");
+
+    const page = pdfDoc.getPage(0);
+
+    for (let input of inputs) {
+        const x = parseInt(input.style.left);
+        const y = page.getHeight() - parseInt(input.style.top);
+        const text = input.value;
+
+        page.drawText(text, { x, y, size: 16 });
+    }
+
+    const newPdfBytes = await pdfDoc.save();
+
+    // send to backend
+    await fetch("/save_pdf", {
+        method: "POST",
+        body: newPdfBytes
+    });
+
+    alert("PDF saved!");
+}
+</script>
+</body>
+</html>
