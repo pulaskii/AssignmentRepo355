@@ -70,6 +70,7 @@
 // Get email from URL
 const params = new URLSearchParams(window.location.search);
 const patientEmail = params.get("email");
+const doctorEmail = params.get("doctor_email");
 
 let patientData = {};  // current data in textboxes
 let originalPatientData = {}; // backup for undo  // will be filled from backend later
@@ -175,7 +176,7 @@ document.getElementById("downloadBtn").addEventListener("click", downloadRecord)
 document.getElementById("undoBtn").addEventListener("click", undoChanges);
 document.getElementById("saveBtn").addEventListener("click", saveRecord);
 document.getElementById("backBtn").addEventListener("click", () => {
-  window.location.href = 'provider_portal?view=patients';
+  window.location.href = `/provider_portal?doctor_email=${encodeURIComponent(doctorEmail)}&view=patients`;
 });
 
 window.addEventListener("load", loadPatientRecord);
