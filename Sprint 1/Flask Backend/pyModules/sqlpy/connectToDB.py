@@ -2,7 +2,7 @@ from mysql import connector
 
 
 def connectDatabase(user = "root", 
-                    password = "password", 
+                    password = "r39Cfz1BE%n&al", 
                     host = "127.0.0.1", 
                     database = "medicalrecords", 
                     raiseOnWarnings = True

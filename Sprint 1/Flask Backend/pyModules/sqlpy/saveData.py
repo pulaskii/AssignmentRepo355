@@ -9,8 +9,8 @@ def saveUserData(userEmail,
     returnVal = 1 #baseCase
     cursor = dbConnection.cursor() # make cursor
 
-    query = ("UPDATE users SET " \
-            "%(columnToSetVal)s = %(changeVal)s"
+    query = ("UPDATE users SET " 
+            "%(columnToSetVal)s = %(changeVal)s "
             "WHERE Email EQUALS %(emailVal)s") # sql update stmt
     
     queryData = {

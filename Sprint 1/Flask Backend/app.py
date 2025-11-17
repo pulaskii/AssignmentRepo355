@@ -91,7 +91,7 @@ def api_get_patient():
     db = connectDatabase()
     result = fetchUserData(email, db)
 
-    if isinstance(result, map):
+    if isinstance(result, dict):
         return jsonify(result)
 
     return jsonify({"error": "Could not fetch user"}), 400
