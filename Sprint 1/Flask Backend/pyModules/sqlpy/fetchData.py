@@ -7,7 +7,7 @@ def fetchUserData(userEmail,
     cursor = dbConnection.cursor()
 
     query = ("SELECT FirstName, LastName, Age, Phone  FROM users "
-         "WHERE Email EQUALS %(emailVal)s") # fetch user data
+         "WHERE Email = %(emailVal)s") # fetch user data
     
     queryData = {
       'emailVal': userEmail 
@@ -28,8 +28,6 @@ def fetchUserData(userEmail,
             'AgeVal': Age,
             'PhoneVal': Phone
         } # make a return map for the row
-
-
 
 
     cursor.close() # close cursor
