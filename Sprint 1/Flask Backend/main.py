@@ -82,6 +82,7 @@ def login():
 def edit_record_page():
     return render_template("edit_record_page.html")
 
+# Get patient data for edit_record_page
 @app.route("/api/get_patient")
 def api_get_patient():
     email = request.args.get("email")
@@ -94,6 +95,7 @@ def api_get_patient():
 
     return jsonify({"error": "Could not fetch user"}), 400
 
+# Save updated patient data from edit_record_page
 @app.route("/api/update_record", methods=["POST"])
 def api_update_record():
     data = request.get_json()
