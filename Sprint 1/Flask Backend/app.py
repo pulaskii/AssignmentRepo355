@@ -5,10 +5,11 @@ from flask_wtf import FlaskForm, CSRFProtect
 from wtforms.validators import EqualTo, InputRequired
 import jinja2
 import mysql
-import pyModules.sqlpy.connectToDB as connectToDB
-import pyModules.sqlpy.createAccountRow as createAccountRow
-import pyModules.sqlpy.fetchData as fetchData
-import pyModules.sqlpy.saveData as saveData
+from pyModules.sqlpy.connectToDB import connectDatabase
+from pyModules.sqlpy.createAccountRow import addNewUser
+from pyModules.sqlpy.fetchData import fetchUserData
+from pyModules.sqlpy.saveData import saveUserData
+from pyModules.sqlpy.fetchAccessMap import fetchAccessMap
 import os
 from dotenv import load_dotenv
 
@@ -44,13 +45,13 @@ def signup():
             password = hashed_password
 
 
-            createAccountRow.addNewUser(first_name,
+            addNewUser(first_name,
                        last_name,
                        user_email,
                        phone_number,
                        password,
                        patient_or_provider,
-                       connectToDB.connectDatabase()
+                       connectDatabase()
                        )
 
     return render_template("signup_page.html", patient_or_provider = patient_or_provider, first_name = first_name, last_name = last_name,
@@ -73,7 +74,7 @@ def login():
             #If validated and the user is a patient, redirect to patient page
             #Jo work your magic
 
-            return redirect(url_for("provider"))
+            return redirect(url_for("provider", email=email_login))
         
     return render_template("login_page.html", email_login = email_login, password_login = password_login,
                            form = login_form)
@@ -87,8 +88,8 @@ def edit_record_page():
 def api_get_patient():
     email = request.args.get("email")
 
-    db = connectToDB.connectDatabase()
-    result = fetchData.fetchUserData(email, db)
+    db = connectDatabase()
+    result = fetchUserData(email, db)
 
     if isinstance(result, map):
         return jsonify(result)
@@ -102,10 +103,10 @@ def api_update_record():
     updated_fields = data.get("updated_fields")
     email = data.get("email")
 
-    db = connectToDB.connectDatabase()
+    db = connectDatabase()
 
     for column, value in updated_fields.items():
-        saveData.saveUserData(email,
+        saveUserData(email,
                      dbConnection=db,
                      columnToSet=column,
                      valueToSet=value)
@@ -114,7 +115,30 @@ def api_update_record():
 
 @app.route('/provider_portal')
 def provider():
-    return render_template('provider_homepage.html')
+    doctor_email = request.args.get("email")
+    return render_template('provider_homepage.html', doctor_email=doctor_email)
+
+# Fetch patients or doctors from accessMap
+@app.route("/api/fetch_access_map")
+def api_fetch_access_map():
+    user_email = request.args.get("email")
+    user_type = request.args.get("type", "doctor").lower()   # default to doctor
+
+    # Validate type
+    if user_type not in ["doctor", "patient"]:
+        return jsonify({"error": "Invalid type. Use 'doctor' or 'patient'."}), 400
+
+    db = connectDatabase()
+
+    try:
+        result = fetchAccessMap(user_email, db, user_type)
+
+        # Expecting a list of tuples: [("First","Last","email"), ...]
+        return jsonify(result)
+
+    except Exception as e:
+        print("ERROR:", e)
+        return jsonify({"error": "Failed to fetch access map"}), 500
 
 class SignUp(FlaskForm):
     patient_or_provider = RadioField("Are you a patient or a provider?", choices=[('Patient', 'Patient'), ('Provider', 'Provider')], validators=[InputRequired()])

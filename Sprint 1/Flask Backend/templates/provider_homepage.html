@@ -48,22 +48,10 @@
     </div>
 
     <script>
+        const USER_EMAIL = "{{ doctor_email }}";
+        
         let currentView = "home"; // "home" = portal menu, "list" = patient list
-
-        // Mock patient data
-        const patients = new Set([
-            { name: "Patient 1", email: "johndoe@test.com" },
-            { name: "Patient 2", email: "johndoe@test.com" },
-            { name: "Patient 3", email: "johndoe@test.com" },
-            { name: "Patient 4", email: "johndoe@test.com" },
-            { name: "Patient 5", email: "johndoe@test.com" },
-            { name: "Patient 6", email: "johndoe@test.com" },
-            { name: "Patient 7", email: "johndoe@test.com" },
-            { name: "Patient 8", email: "johndoe@test.com" },
-            { name: "Patient 9", email: "johndoe@test.com" },
-            { name: "Patient 10", email: "johndoe@test.com" }
-        ]);
-
+        let patients = [];
         let selectedPatient = null;
 
         const view_patients_button = document.getElementById('view_patients_button');
@@ -75,6 +63,24 @@
         const patient_header = document.getElementById('patient_header');
         const patient_list = document.getElementById('patient_list');
         const back_button = document.getElementById('back_button');
+
+        async function loadPatients() {
+            try {
+                const response = await fetch(`/api/fetch_access_map?email=${encodeURIComponent(USER_EMAIL)}&type=doctor`);
+                const data = await response.json();
+
+                patients = data.map(row => ({
+                    name: row[0] + " " + row[1],
+                    email: row[2]
+                }));
+
+                renderPatients();
+
+            } catch (err) {
+                console.error("Error loading patients:", err);
+                alert("Failed to load patients.");
+            }
+        }
 
         // Render patients
         function renderPatients() {
@@ -118,7 +124,7 @@
             edit_button.hidden = false;
             remove_button.hidden = false;
 
-            renderPatients();
+            loadPatients();
 
             view_patients_button.style.display = 'none';
             new_patient_button.style.display = 'none';
@@ -162,7 +168,7 @@
                 edit_button.hidden = false;
                 remove_button.hidden = false;
 
-                renderPatients();
+                loadPatients();
                 view_patients_button.style.display = 'none';
                 new_patient_button.style.display = 'none';
                 profile_settings_button.style.display = 'none';
