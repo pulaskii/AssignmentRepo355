@@ -103,11 +103,9 @@ def api_update_record():
     updated_fields = data.get("updated_fields")
     email = data.get("email")
 
-    db = connectDatabase()
-
     for column, value in updated_fields.items():
-        saveUserData(email,
-                     dbConnection=db,
+        saveUserData(userEmail=email,
+                     dbConnection=connectDatabase(),
                      columnToSet=column,
                      valueToSet=value)
 

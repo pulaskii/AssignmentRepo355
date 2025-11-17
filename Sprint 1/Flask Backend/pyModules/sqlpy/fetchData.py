@@ -23,10 +23,10 @@ def fetchUserData(userEmail,
         # iterate through a set of tuples
         # the tuples are the rows, but we only fetched one
         returnMap = {
-            'FirstNameVal': FirstName,
-            'LastNameVal': LastName,
-            'AgeVal': Age,
-            'PhoneVal': Phone
+            'FirstName': FirstName,
+            'LastName': LastName,
+            'Age': Age,
+            'Phone': Phone
         } # make a return map for the row
 
 

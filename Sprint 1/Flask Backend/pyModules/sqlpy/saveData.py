@@ -6,15 +6,20 @@ def saveUserData(userEmail,
                  valueToSet
                  ):
     
-    returnVal = 1 #baseCase
+
+        # 1. WHITELIST columns (CRITICALLY IMPORTANT)
+    allowed_columns = {"FirstName", "LastName", "Phone", "Age", "Address", "PasswordHash"}
+    if columnToSet not in allowed_columns:
+        raise ValueError(f"Invalid or unsafe column name: {columnToSet}")
+    
+
     cursor = dbConnection.cursor() # make cursor
 
-    query = ("UPDATE users SET " 
-            "%(columnToSetVal)s = %(changeVal)s "
-            "WHERE Email EQUALS %(emailVal)s") # sql update stmt
+    query = ("UPDATE users " 
+            f"SET {columnToSet} = %(changeVal)s "
+            "WHERE Email = %(emailVal)s") # sql update stmt
     
     queryData = {
-        'columnToSetVal': columnToSet,
         'changeVal': valueToSet,
         'emailVal': userEmail
     } # sql updata vals
@@ -23,6 +28,12 @@ def saveUserData(userEmail,
         cursor.execute(query, queryData) # execute stmt
     except:
         return 2
+    
+    if cursor.rowcount == 0:
+        print("no rows")
+        return {"status": 4, "error": "No user with that email"}
+
+
     try:
         dbConnection.commit()
     except:
@@ -32,5 +43,5 @@ def saveUserData(userEmail,
     dbConnection.close() # close connection
 
 
-    return returnVal
+    return 1
 
