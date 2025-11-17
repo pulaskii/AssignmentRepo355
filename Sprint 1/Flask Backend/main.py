@@ -1,12 +1,14 @@
-from flask import Flask, render_template, request, redirect, url_for, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for, jsonify
 from flask_bcrypt import Bcrypt
 from wtforms import StringField, PasswordField, SubmitField, RadioField, validators
 from flask_wtf import FlaskForm, CSRFProtect
 from wtforms.validators import EqualTo, InputRequired
 import jinja2
 import mysql
-import pyModules.sqlpy.connectToDB 
-import pyModules.sqlpy.createAccountRow
+import pyModules.sqlpy.connectToDB as connectToDB
+import pyModules.sqlpy.createAccountRow as createAccountRow
+import pyModules.sqlpy.fetchData as fetchData
+import pyModules.sqlpy.saveData as saveData
 import os
 from dotenv import load_dotenv
 
@@ -42,13 +44,13 @@ def signup():
             password = hashed_password
 
 
-            pyModules.sqlpy.createAccountRow.addNewUser(first_name,
+            createAccountRow.addNewUser(first_name,
                        last_name,
                        user_email,
                        phone_number,
                        password,
                        patient_or_provider,
-                       pyModules.sqlpy.connectToDB.connectDatabase()
+                       connectToDB.connectDatabase()
                        )
 
     return render_template("signup_page.html", patient_or_provider = patient_or_provider, first_name = first_name, last_name = last_name,
@@ -80,18 +82,33 @@ def login():
 def edit_record_page():
     return render_template("edit_record_page.html")
 
-@app.route("/save_document", methods=["POST"])
-def save_document():
-    text = request.data.decode("utf-8")  # get raw text
-    
-    #TODO save the updated text file to the SQL database here instead of overwriting a static file
-    file_path = os.path.join(app.static_folder, "document.txt")
-    try:
-        with open(file_path, "w", encoding="utf-8") as f:
-            f.write(text)
-        return "OK", 200
-    except Exception as e:
-        return str(e), 500
+@app.route("/api/get_patient")
+def api_get_patient():
+    email = request.args.get("email")
+
+    db = connectToDB.connectDatabase()
+    result = fetchData.fetchUserData(email, db)
+
+    if isinstance(result, map):
+        return jsonify(result)
+
+    return jsonify({"error": "Could not fetch user"}), 400
+
+@app.route("/api/update_record", methods=["POST"])
+def api_update_record():
+    data = request.get_json()
+    updated_fields = data.get("updated_fields")
+    email = data.get("email")
+
+    db = connectToDB.connectDatabase()
+
+    for column, value in updated_fields.items():
+        saveData.saveUserData(email,
+                     dbConnection=db,
+                     columnToSet=column,
+                     valueToSet=value)
+
+    return jsonify({"message": "Record saved"})
 
 @app.route('/provider_portal')
 def provider():

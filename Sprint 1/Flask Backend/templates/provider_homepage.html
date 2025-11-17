@@ -10,29 +10,28 @@
             border: 1px solid #ccc;
             margin-top: 10px;
         }
+
+        .patient-item {
+            padding: 8px;
+            cursor: pointer;
+        }
+
+        .patient-item.selected {
+            background-color: #cce5ff;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
     <h1>Provider Portal</h1>
 
     <div>
-        <button id ="view_patients_button">View Patients</button>
+        <button id="view_patients_button">View Patients</button>
     </div>
 
     <h3 id="patient_header" hidden>Patients:</h3>
 
-    <div class="patient-list" id="patient_list" hidden>
-        <div>Patient 1</div>
-        <div>Patient 2</div>
-        <div>Patient 3</div>
-        <div>Patient 4</div>
-        <div>Patient 5</div>
-        <div>Patient 6</div>
-        <div>Patient 7</div>
-        <div>Patient 8</div>
-        <div>Patient 9</div>
-        <div>Patient 10</div>
-    </div>
+    <div class="patient-list" id="patient_list" hidden></div>
 
     <div class="actions">
         <button id="view_button" hidden>View</button>
@@ -47,6 +46,21 @@
     </div>
 
     <script>
+    const patients = new Set([
+        { name: "Patient 1", email: "johndoe@test.com" },
+        { name: "Patient 2", email: "johndoe@test.com" },
+        { name: "Patient 3", email: "johndoe@test.com" },
+        { name: "Patient 4", email: "johndoe@test.com" },
+        { name: "Patient 5", email: "johndoe@test.com" },
+        { name: "Patient 6", email: "johndoe@test.com" },
+        { name: "Patient 7", email: "johndoe@test.com" },
+        { name: "Patient 8", email: "johndoe@test.com" },
+        { name: "Patient 9", email: "johndoe@test.com" },
+        { name: "Patient 10", email: "johndoe@test.com" }
+    ]);
+
+    let selectedPatient = null;
+
     const view_patients_button = document.getElementById('view_patients_button');
     const view_button = document.getElementById('view_button');
     const edit_button = document.getElementById('edit_button');
@@ -54,23 +68,57 @@
     const patient_header = document.getElementById('patient_header');
     const patient_list = document.getElementById('patient_list');
     const back_button = document.getElementById('back_button');
-    
+
+    // Render patients dynamically
+    function renderPatients() {
+        patient_list.innerHTML = "";
+
+        patients.forEach(patient => {
+            const div = document.createElement("div");
+            div.classList.add("patient-item");
+            div.textContent = patient.name;
+
+            div.addEventListener("click", () => {
+                // If this patient is already selected, deselect
+                if (selectedPatient === patient) {
+                    selectedPatient = null;
+                    div.classList.remove("selected");
+                } else {
+                    // Deselect all
+                    document.querySelectorAll(".patient-item").forEach(item => {
+                        item.classList.remove("selected");
+                    });
+
+                    // Select this one
+                    selectedPatient = patient;
+                    div.classList.add("selected");
+                }
+            });
+
+            patient_list.appendChild(div);
+        });
+    }
+
     document.getElementById('edit_button').addEventListener('click', () => {
-        window.location.href = 'edit_record_page';
+        if (!selectedPatient) {
+            alert("Please select a patient before editing.");
+            return;
+        }
+
+        window.location.href = `edit_record_page?email=${encodeURIComponent(selectedPatient.email)}`;
     });
 
-
     view_patients_button.addEventListener('click', () => {
+        patient_list.hidden = false;
+        patient_header.hidden = false;
+        view_button.hidden = false;
+        edit_button.hidden = false;
+        remove_button.hidden = false;
 
-      patient_list.hidden = false;
-      patient_header.hidden = false;
-      view_button.hidden = false;
-      edit_button.hidden = false;
-      remove_button.hidden = false;
+        renderPatients(); // Populate the list
 
-      view_patients_button.style.display = 'none';
-
-      back_button.hidden = false;
+        view_patients_button.style.display = 'none';
+        back_button.hidden = false;
     });
 
     back_button.addEventListener('click', () => {
@@ -81,9 +129,26 @@
       edit_button.hidden = true;
       remove_button.hidden = true;
 
-      view_patients_button.style.display = '';
+      selectedPatient = null;
 
+      view_patients_button.style.display = '';
       back_button.hidden = false;
+    });
+
+    // When returning from edit page, auto-open patient list
+    window.addEventListener('load', () => {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('view') === 'patients') {
+            patient_list.hidden = false;
+            patient_header.hidden = false;
+            view_button.hidden = false;
+            edit_button.hidden = false;
+            remove_button.hidden = false;
+
+            renderPatients();
+            view_patients_button.style.display = 'none';
+            back_button.hidden = false;
+        }
     });
 
     </script>

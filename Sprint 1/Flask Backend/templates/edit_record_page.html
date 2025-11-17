@@ -2,17 +2,8 @@
 <html>
 <head>
   <style>
-    #saveBtn, #undoBtn, #downloadBtn, #uploadBtn, #backBtn {
+    #saveBtn, #undoBtn, #downloadBtn, #backBtn {
       padding: 10px 20px;
-      font-size: 16px;
-    }
-
-    #editor {
-      width: 80%;
-      height: 500px;
-      margin: 20px auto;
-      display: block;
-      font-family: monospace;
       font-size: 16px;
     }
 
@@ -23,8 +14,39 @@
       margin-bottom: 20px;
     }
 
-    #undoBtn, #downloadBtn, #uploadBtn, #backBtn {
-      margin-right: 10px;
+    #recordWrapper {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      width: 100%;
+      margin-top: 20px;
+    }
+
+    #recordContainer {
+      width: 60%;
+    }
+
+    .field-row {
+      width: 100%;
+      margin: 10px auto;
+      display: flex;
+      justify-content: flex-start;
+      gap: 8px;
+      align-items: flex-start;
+      font-size: 18px;
+    }
+
+    .field-row span {
+      width: 120px;
+      padding-top: 6px;
+    }
+
+    .field-row textarea {
+      flex: 1;
+      padding: 5px;
+      font-size: 16px;
+      min-height: 30px;
+      resize: vertical;
     }
   </style>
 </head>
@@ -33,106 +55,130 @@
 <div class="button-container">
   <button id="backBtn">Back</button>
   <button id="downloadBtn">Download</button>
-  <button id="uploadBtn">Upload</button>
   <button id="undoBtn">Undo</button>
   <button id="saveBtn">Save</button>
 </div>
 
-<textarea id="editor">Loading...</textarea>
+<!-- New section replacing the text editor -->
+<div id="recordWrapper">
+  <div id="recordContainer">
+    Loading patient record...
+  </div>
+</div>
 
 <script>
-const editor = document.getElementById('editor');
-let originalText = "";
+// Get email from URL
+const params = new URLSearchParams(window.location.search);
+const patientEmail = params.get("email");
 
-// Load the text file when the page loads
-async function loadTextFile() {
-  try {
-    const response = await fetch('/static/document.txt');
-    if (!response.ok) throw new Error('Failed to load file');
-    const text = await response.text();
-    editor.value = text;
-    originalText = text; // store original content for rollback
-  } catch (err) {
-    editor.value = "Error loading file: " + err;
-  }
+let patientData = {};  // current data in textboxes
+let originalPatientData = {}; // backup for undo  // will be filled from backend later
+
+// Pseudocode: request actual data from backend
+async function loadPatientRecord() {
+    const response = await fetch(`/api/get_patient?email=${patientEmail}`);
+    patientData = await response.json();
+
+    originalPatientData = JSON.parse(JSON.stringify(patientData)); // Make a deep copy for undo
+
+    renderFields();
 }
 
-// Save the text file to the server
-async function saveTextFile() {
-  const confirmSave = confirm("Are you sure you want to save all changes?");
-  if (!confirmSave) return;
+// Convert patientData → editable form fields
+function renderFields() {
+    const container = document.getElementById("recordContainer");
+    container.innerHTML = "";
 
-  try {
-    const text = editor.value;
-    const response = await fetch('/save_document', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'text/plain',
-        'X-CSRFToken': '{{ csrf_token() }}'
-      },
-      body: text
+    for (const [fieldName, fieldValue] of Object.entries(patientData)) {
+
+        const row = document.createElement("div");
+        row.className = "field-row";
+
+        const label = document.createElement("span");
+        label.textContent = fieldName.replace("_", " "); // Format field name
+
+        const textarea = document.createElement("textarea");
+        textarea.value = fieldValue;
+        textarea.dataset.field = fieldName;
+        textarea.rows = 1;
+        textarea.style.height = "30px"; // initial height
+        textarea.style.overflowY = "hidden";
+
+        textarea.dispatchEvent(new Event('input'));
+
+        row.appendChild(label);
+        row.appendChild(textarea);
+        container.appendChild(row);
+    }
+}
+
+function downloadRecord() {
+    const updated = {};
+    document.querySelectorAll("textarea[data-field]").forEach(textarea => {
+        updated[textarea.dataset.field] = textarea.value;
     });
 
-    if (!response.ok) throw new Error('Failed to save file');
+    // Convert updated data into text (simple key: value per line)
+    let textContent = "";
+    for (const [key, value] of Object.entries(updated)) {
+        textContent += `${key.replace("_", " ")}: ${value}\n`;
+    }
 
-    originalText = text; // update original content after save
-  } catch (err) {
-    alert('Error saving file: ' + err);
+    const blob = new Blob([textContent], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "Patient_Record.txt";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function undoChanges() {
+    if (confirm("Are you sure you want to undo all changes?")) {
+        // Replace current textareas with original data
+        document.querySelectorAll("textarea[data-field]").forEach(textarea => {
+            const field = textarea.dataset.field;
+            textarea.value = originalPatientData[field];
+            // Adjust height
+            textarea.style.height = "30px";
+            textarea.style.overflowY = "hidden";
+        });
+    }
+}
+
+function saveRecord() {
+    if (confirm("Are you sure you want to save all changes?")) {
+
+    // Read all textarea values
+    document.querySelectorAll("textarea[data-field]").forEach(textarea => {
+        const field = textarea.dataset.field;
+        originalPatientData[field] = textarea.value;
+    });
+
+    console.log("Saved data:", originalPatientData);
+
+    fetch("/api/update_record", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            email : patientEmail,
+            updated_fields: originalPatientData
+        })
+    });
   }
 }
 
-// Undo changes
-function undoChanges() {
-  const confirmUndo = confirm("Are you sure you want to rollback all changes?");
-  if (!confirmUndo) return;
-
-  editor.value = originalText; // revert to original
-}
-
-// Download the current text as a file
-function downloadTextFile() {
-  const text = editor.value;
-  const blob = new Blob([text], { type: 'text/plain' });
-  const url = URL.createObjectURL(blob);
-
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'Record.txt';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
-
-// Upload a text-based file
-function uploadTextFile() {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = `.txt`; // Only accept txt files
-
-  input.onchange = e => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = event => {
-      const confirmUpload = confirm("Are you sure you want to load this file? Unsaved changes will be lost.");
-      if (confirmUpload) editor.value = event.target.result;
-    };
-    reader.readAsText(file);
-  };
-
-  input.click();
-}
-
-document.getElementById('backBtn').addEventListener('click', () => {
-  window.location.href = 'provider_portal';
+document.getElementById("downloadBtn").addEventListener("click", downloadRecord);
+document.getElementById("undoBtn").addEventListener("click", undoChanges);
+document.getElementById("saveBtn").addEventListener("click", saveRecord);
+document.getElementById("backBtn").addEventListener("click", () => {
+  window.location.href = 'provider_portal?view=patients';
 });
-document.getElementById('saveBtn').addEventListener('click', saveTextFile);
-document.getElementById('undoBtn').addEventListener('click', undoChanges);
-document.getElementById('downloadBtn').addEventListener('click', downloadTextFile);
-document.getElementById('uploadBtn').addEventListener('click', uploadTextFile);
-window.addEventListener('load', loadTextFile);
+
+window.addEventListener("load", loadPatientRecord);
 </script>
 
 </body>
