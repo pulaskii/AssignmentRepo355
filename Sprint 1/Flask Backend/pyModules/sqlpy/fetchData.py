@@ -6,7 +6,7 @@ def fetchUserData(userEmail,
 
     cursor = dbConnection.cursor()
 
-    query = ("SELECT FirstName, LastName, Age, Phone,  FROM users "
+    query = ("SELECT FirstName, LastName, Age, Phone  FROM users "
          "WHERE Email EQUALS %(emailVal)s") # fetch user data
     
     queryData = {
@@ -17,10 +17,6 @@ def fetchUserData(userEmail,
         cursor.execute(query, queryData) # execute the changes
     except:
         return 2 #errorval
-    try:
-        dbConnection.commit() #save the changes
-    except:
-        return 3 #errorval
     
     returnMap = {}
     for (FirstName, LastName, Age, Phone,) in cursor:
