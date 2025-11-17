@@ -1,0 +1,7 @@
+CREATE TABLE users (
+    connectionUID VARCHAR(50) PRIMARY KEY,
+
+    doctor VARCHAR(50) FOREIGN KEY,
+
+    user VARCHAR(50) FOREIGN KEY
+)

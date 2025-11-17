@@ -22,7 +22,7 @@ def fetchUserData(userEmail,
     except:
         return 3 #errorval
     
-
+    returnMap = {}
     for (FirstName, LastName, Age, Phone,) in cursor:
         # iterate through a set of tuples
         # the tuples are the rows, but we only fetched one

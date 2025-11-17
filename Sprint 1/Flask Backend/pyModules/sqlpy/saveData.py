@@ -23,7 +23,10 @@ def saveUserData(userEmail,
         cursor.execute(query, queryData) # execute stmt
     except:
         return 2
-
+    try:
+        dbConnection.commit()
+    except:
+        return 3
 
     cursor.close() # close cursor
     dbConnection.close() # close connection
