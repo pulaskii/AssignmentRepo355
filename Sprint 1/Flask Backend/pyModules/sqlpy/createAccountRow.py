@@ -52,8 +52,8 @@ def addNewUser( firstName,
         if err.errno == 1062:
             returnVal = 3
 
-    cursor.close()
-    dbConnection.close()
+    cursor.close() # close cursor
+    dbConnection.close() # close connection
 
     return returnVal
 
