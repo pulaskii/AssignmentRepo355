@@ -1,7 +1,7 @@
-CREATE TABLE users (
+CREATE TABLE accessMap (
     connectionUID VARCHAR(50) PRIMARY KEY,
 
-    doctor VARCHAR(50) FOREIGN KEY,
+    doctor VARCHAR(50) NOT NULL,
 
-    user VARCHAR(50) FOREIGN KEY
+    patient VARCHAR(50) NOT NULL
 )
