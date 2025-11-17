@@ -111,7 +111,7 @@
                 alert("Please select a patient before editing.");
                 return;
             }
-            window.location.href = `edit_record_page?email=${encodeURIComponent(selectedPatient.email)}`;
+            window.location.href = `edit_record_page?email=${encodeURIComponent(selectedPatient.email)}&doctor_email=${encodeURIComponent(USER_EMAIL)}`;
         });
 
         // VIEW PATIENTS → show list
