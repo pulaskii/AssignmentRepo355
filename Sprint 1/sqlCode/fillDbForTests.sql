@@ -5,6 +5,8 @@ VALUES  ('bob@bob.com', 'Bobf', 'Bobl', 'patient', '$2b$12$Vam60GL5xHEvpq/6EfMIN
         ('jimothy@jimothy.com', 'jimothyf', 'jimmothyl', 'patient', '$2b$12$Vam60GL5xHEvpq/6EfMINOByfVe/7.tBwWBY/jhIPgroXT28yxUmO');
 
 
+############################################
+
 
 INSERT INTO accessMap (connectionUID, doctor, patient)
 
