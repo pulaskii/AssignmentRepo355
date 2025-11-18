@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
+
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+
   <style>
     #saveBtn, #undoBtn, #downloadBtn, #backBtn {
       padding: 10px 20px;
@@ -67,6 +70,7 @@
 </div>
 
 <script>
+const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
 // Get email from URL
 const params = new URLSearchParams(window.location.search);
 const patientEmail = params.get("email");
@@ -159,12 +163,15 @@ function saveRecord() {
     });
 
     fetch("/api/update_record", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            email: patientEmail,
-            updated_fields: updatedFields
-        })
+      method: "POST",
+      headers: { 
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrfToken
+      },
+      body: JSON.stringify({
+        email: patientEmail,
+        updated_fields: updatedFields
+      })
     }).then(() => {
         originalPatientData = JSON.parse(JSON.stringify(updatedFields));
     });
