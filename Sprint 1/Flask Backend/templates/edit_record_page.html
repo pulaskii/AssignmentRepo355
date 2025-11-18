@@ -152,23 +152,21 @@ function undoChanges() {
 
 function saveRecord() {
   if (confirm("Are you sure you want to save all changes?")) {
-
-    // Read all textarea values and make sure field names have underscores
     const updatedFields = {};
     document.querySelectorAll("textarea[data-field]").forEach(textarea => {
-        const fieldWithUnderscore = textarea.dataset.field.replace(" ", "_"); 
+        const fieldWithUnderscore = textarea.dataset.field.replace(" ", "_");
         updatedFields[fieldWithUnderscore] = textarea.value;
     });
-
-    console.log("Saved data:", updatedFields);
 
     fetch("/api/update_record", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-            email : patientEmail,
+            email: patientEmail,
             updated_fields: updatedFields
         })
+    }).then(() => {
+        originalPatientData = JSON.parse(JSON.stringify(updatedFields));
     });
   }
 }
