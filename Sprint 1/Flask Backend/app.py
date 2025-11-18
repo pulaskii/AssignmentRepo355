@@ -98,7 +98,10 @@ def api_get_patient():
 
 # Save updated patient data from edit_record_page
 @app.route("/api/update_record", methods=["POST"])
+@csrf.exempt
 def api_update_record():
+    print("test")
+    
     data = request.get_json()
     updated_fields = data.get("updated_fields")
     email = data.get("email")

@@ -177,7 +177,7 @@ document.getElementById("downloadBtn").addEventListener("click", downloadRecord)
 document.getElementById("undoBtn").addEventListener("click", undoChanges);
 document.getElementById("saveBtn").addEventListener("click", saveRecord);
 document.getElementById("backBtn").addEventListener("click", () => {
-  window.location.href = `/provider_portal?doctor_email=${encodeURIComponent(doctorEmail)}&view=patients`;
+  window.location.href = `/provider_portal?email=${encodeURIComponent(doctorEmail)}&view=patients`;
 });
 
 window.addEventListener("load", loadPatientRecord);
