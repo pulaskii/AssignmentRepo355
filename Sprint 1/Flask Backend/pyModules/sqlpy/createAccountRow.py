@@ -15,12 +15,12 @@ def addNewUser( firstName,
     returnVal = 1
 
     addUser = ("INSERT INTO users"
-                 "(Email, FirstName, LastName, PasswordHash, Phone, PatientOrProvider)"
+                 "(Email, First_Name, Last_Name, PasswordHash, Phone_Number, PatientOrProvider)"
                  "VALUES ((%(EmailVal)s)," \
-                 "(%(FirstNameVal)s)," \
-                 "(%(LastNameVal)s)," \
+                 "(%(First_NameVal)s)," \
+                 "(%(Last_NameVal)s)," \
                  "(%(PasswordVal)s)," \
-                 "(%(PhoneVal)s)," \
+                 "(%(Phone_NumberVal)s)," \
                  "(%(PatientOrProviderVal)s))"
     )   
     
@@ -30,10 +30,10 @@ def addNewUser( firstName,
 
     dataUser = {
     'EmailVal': userEmail,
-    'FirstNameVal': firstName,
-    'LastNameVal': lastName,
+    'First_NameVal': firstName,
+    'Last_NameVal': lastName,
     'PasswordVal': password,
-    'PhoneVal': phoneNumber,
+    'Phone_NumberVal': phoneNumber,
     'PatientOrProviderVal': PatientOrProvider
     }
 

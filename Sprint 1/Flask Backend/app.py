@@ -91,7 +91,7 @@ def api_get_patient():
     db = connectDatabase()
     result = fetchUserData(email, db)
 
-    if isinstance(result, dict):
+    if result:
         return jsonify(result)
 
     return jsonify({"error": "Could not fetch user"}), 400
@@ -141,7 +141,7 @@ def api_fetch_access_map():
         return jsonify({"error": "Failed to fetch access map"}), 500
 
 class SignUp(FlaskForm):
-    patient_or_provider = RadioField("Are you a patient or a provider?", choices=[('Patient', 'Patient'), ('Provider', 'Provider')], validators=[InputRequired()])
+    patient_or_provider = RadioField("Are you a patient or a provider?", choices=[('patient', 'Patient'), ('provider', 'Provider')], validators=[InputRequired()])
 
     first_name = StringField("Enter your first name", validators = [validators.DataRequired(message = "First name is required")], render_kw = {'placeholder': "John"})
     

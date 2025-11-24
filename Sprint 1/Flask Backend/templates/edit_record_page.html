@@ -40,7 +40,7 @@
     }
 
     .field-row span {
-      width: 120px;
+      width: 150px;
       padding-top: 6px;
     }
 
@@ -77,15 +77,18 @@ const patientEmail = params.get("email");
 const doctorEmail = params.get("doctor_email");
 
 let patientData = {};  // current data in textboxes
-let originalPatientData = {}; // backup for undo  // will be filled from backend later
+let originalPatientData = {}; // backup for undo
 
-// Pseudocode: request actual data from backend
 async function loadPatientRecord() {
     const response = await fetch(`/api/get_patient?email=${patientEmail}`);
-    patientData = await response.json();
+    const patientArray = await response.json();
 
-    originalPatientData = JSON.parse(JSON.stringify(patientData)); // Make a deep copy for undo
+    patientData = {};
+    patientArray.forEach(obj => {
+        patientData[obj.field] = obj.value;
+    });
 
+    originalPatientData = JSON.parse(JSON.stringify(patientData));
     renderFields();
 }
 
