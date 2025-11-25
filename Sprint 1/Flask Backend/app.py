@@ -10,14 +10,20 @@ from pyModules.sqlpy.createAccountRow import addNewUser
 from pyModules.sqlpy.fetchData import fetchUserData
 from pyModules.sqlpy.saveData import saveUserData
 from pyModules.sqlpy.fetchAccessMap import fetchAccessMap
+from pyModules.sqlpy.saveEmbedding import save_embedding
 import os
 from dotenv import load_dotenv
+import numpy as np
+import ollama
 
 app = Flask(__name__)
 load_dotenv()
 app.config["SECRET_KEY"] = os.getenv("CONFIG_KEY")
 csrf = CSRFProtect(app)
 bcrypt = Bcrypt(app)
+
+EMBEDDING_MODEL = "embeddinggemma"
+EXCLUDED_FIELDS = ["First_Name", "Last_Name", "Email", "Phone_Number", "Date_Updated"]  # fields to skip for per-field embeddings
 
 @app.route("/")
 def home():
@@ -96,22 +102,56 @@ def api_get_patient():
 
     return jsonify({"error": "Could not fetch user"}), 400
 
-# Save updated patient data from edit_record_page
+# Save updated patient data and embeddings from edit_record_page
 @app.route("/api/update_record", methods=["POST"])
 def api_update_record():
-    print("test")
-    
     data = request.get_json()
     updated_fields = data.get("updated_fields")
     email = data.get("email")
 
+    # --- Save updated fields to user table ---
     for column, value in updated_fields.items():
-        saveUserData(userEmail=email,
-                     dbConnection=connectDatabase(),
-                     columnToSet=column,
-                     valueToSet=value)
+        saveUserData(
+            userEmail=email,
+            dbConnection=connectDatabase(),
+            columnToSet=column,
+            valueToSet=value
+        )
 
-    return jsonify({"message": "Record saved"})
+    # --- Create embeddings for updated patient record ---
+    patient_record = {**updated_fields, "Email": email}
+
+    # Per-field embeddings
+    for field, value in patient_record.items():
+        if field in EXCLUDED_FIELDS:
+            continue
+
+        # If the value is empty, save None (NULL)
+        if value is None or str(value).strip() == "":
+            vec = None
+        else:
+            vec = embed(str(value))
+        
+        save_embedding(connectDatabase(), email, field, vec)
+
+
+    # Full record embedding
+    full_text = build_full_record_text(patient_record)
+    full_vec = embed(full_text)
+
+    save_embedding(connectDatabase(), email, "Full_Record", full_vec)
+
+    return jsonify({"message": "Record saved and embeddings updated"})
+
+def embed(text: str):
+    """Generate embedding using Ollama."""
+    batch = ollama.embed(model=EMBEDDING_MODEL, input=[text])
+    return np.array(batch["embeddings"][0], dtype=np.float32)
+
+
+def build_full_record_text(patient: dict) -> str:
+    """Concatenate all patient fields into a single string, excluding Email."""
+    return " ".join(str(v) for k, v in patient.items() if k not in EXCLUDED_FIELDS)
 
 @app.route('/provider_portal')
 def provider():
