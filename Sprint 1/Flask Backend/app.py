@@ -15,6 +15,9 @@ import os
 from dotenv import load_dotenv
 import numpy as np
 import ollama
+from typing import Dict
+from pyModules.ollama.summarization import call_llm_summary
+from pyModules.ollama.comparison import find_similar_patients
 
 app = Flask(__name__)
 load_dotenv()
@@ -179,6 +182,47 @@ def api_fetch_access_map():
     except Exception as e:
         print("ERROR:", e)
         return jsonify({"error": "Failed to fetch access map"}), 500
+
+# === Flask endpoints ===
+@app.route("/summarize", methods=["POST"])
+def summarize():
+    payload = request.get_json(force=True)
+    record: Dict = payload.get("record", {})
+    prompt: str = payload.get("prompt", "")
+
+    if not isinstance(record, dict):
+        return jsonify({"error": "record must be an object/dict"}), 400
+    if not isinstance(prompt, str):
+        return jsonify({"error": "prompt must be a string"}), 400
+
+    summaries = call_llm_summary(record, prompt)
+    requested_fields = [s.field for s in summaries]
+    missing_fields = [f for f in record.keys() if f not in requested_fields]
+
+    response_json = {
+        "requested_fields": requested_fields,
+        "missing_fields": missing_fields,
+        "summaries": [s.model_dump() for s in summaries],
+        "error": None,
+        "summary_text": "\n".join(s.summary for s in summaries)
+    }
+    return jsonify(response_json), 200
+
+@app.route("/similar_patients", methods=["POST"])
+def similar_patients():
+    payload = request.get_json(force=True)
+    email = payload.get("email")
+    prompt = payload.get("prompt", "")
+
+    if not isinstance(email, str):
+        return jsonify({"error": "email must be a string"}), 400
+
+    top_emails, fields_used = find_similar_patients(email, prompt)
+    return jsonify({
+        "target_email": email,
+        "similar_patients": top_emails,
+        "fields_compared": fields_used
+    }), 200
 
 class SignUp(FlaskForm):
     patient_or_provider = RadioField("Are you a patient or a provider?", choices=[('patient', 'Patient'), ('provider', 'Provider')], validators=[InputRequired()])
