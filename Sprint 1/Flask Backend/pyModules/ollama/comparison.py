@@ -5,12 +5,9 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-#TODO Get the data from the SQL database
-
 # === Config ===
-EXCLUDED_FIELDS = ["FirstName", "LastName", "Email"] #TODO Add more fields to exclude
-EMBEDDINGS_FILE = "patient_embeddings.json"
-ALL_FIELDS = ["Age", "Sex", "Weight", "Height", "MedicalHistory"] + EXCLUDED_FIELDS #TODO Actually get the fields from DB
+EXCLUDED_FIELDS = ["First_Name", "Last_Name", "Email", "Phone_Number", "Date_Updated"] # I MAY HAVE TO REMOVE THE UNDERSCORES
+AVAILABLE_FIELDS = ["Age", "Sex", "Weight", "Height", "Medications", "Allergies", "Active_Problems", "Medical_History", "Family_History"] #TODO Actually get the fields from DB?
 LLM_MODEL = "gpt-oss:20b-cloud"
 NUM_SIMILAR_PATIENTS = 3 # TODO Make configurable later
 seed = 69
@@ -53,7 +50,7 @@ def cosine_similarity_matrix(target_vec: np.ndarray, matrix: np.ndarray):
 
 def select_fields_from_prompt(prompt: str, available_fields: list[str]) -> list[str]:
     if available_fields is None:
-        available_fields = ALL_FIELDS
+        available_fields = AVAILABLE_FIELDS
 
     system_message = (
         "You are an assistant that identifies which fields of a patient record are relevant "
@@ -80,7 +77,7 @@ def select_fields_from_prompt(prompt: str, available_fields: list[str]) -> list[
         return [f for f in selected_fields if f in available_fields and f not in EXCLUDED_FIELDS]
     except Exception:
         logger.exception("LLM field selection failed, falling back to default fields")
-        return ["Age", "Sex", "Weight", "Height", "MedicalHistory"]
+        return AVAILABLE_FIELDS
 
 
 # ============================
@@ -96,7 +93,7 @@ def find_similar_patients(target_email: str, prompt: str = ""):
 
     # Fallback if no fields selected
     if not fields_to_compare:
-        fields_to_compare = ["Age", "Sex", "Weight", "Height", "MedicalHistory"] #TODO, just change this
+        fields_to_compare = AVAILABLE_FIELDS
 
     # -------- Vectorize embedding fusion --------
     target_vec = np.mean(
