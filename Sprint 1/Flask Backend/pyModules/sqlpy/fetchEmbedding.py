@@ -1,6 +1,6 @@
 import numpy as np
 
-def get_embedding(dbConnection, email, field_name):
+def fetch_embedding(dbConnection, email, field_name):
     """Retrieve a single embedding from MySQL."""
     
     column_map = {
