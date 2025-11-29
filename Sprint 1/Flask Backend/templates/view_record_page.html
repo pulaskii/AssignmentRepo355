@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+
+  <style>
+    #downloadBtn, #backBtn, #summarizeBtn, #compareBtn {
+      padding: 10px 20px;
+      font-size: 16px;
+    }
+
+    .button-container {
+      width: 80%;
+      margin: 0 auto;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    #recordWrapper {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      width: 100%;
+      margin-top: 20px;
+      transition: justify-content 0.3s;
+    }
+
+    #recordContainer {
+      width: 60%;
+      transition: width 0.3s;
+    }
+
+    .field-row {
+      width: 100%;
+      margin: 10px auto;
+      display: flex;
+      justify-content: flex-start;
+      gap: 8px;
+      align-items: flex-start;
+      font-size: 18px;
+    }
+
+    .field-row span {
+      width: 150px;
+      padding-top: 6px;
+    }
+
+    .field-row textarea {
+      flex: 1;
+      padding: 5px;
+      font-size: 16px;
+      min-height: 30px;
+      resize: none;
+      background-color: #f0f0f0;
+      border: 1px solid #ccc;
+    }
+  </style>
+</head>
+<body>
+
+<div class="button-container">
+  <button id="backBtn">Back</button>
+  <button id="downloadBtn">Download</button>
+  <button id="summarizeBtn">Summarize</button>
+  <button id="compareBtn">Compare</button>
+</div>
+
+<div id="recordWrapper">
+  <div id="recordContainer">Loading patient record...</div>
+</div>
+
+<script>
+let currentWindow = null;
+const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+const params = new URLSearchParams(window.location.search);
+const patientEmail = params.get("email");
+const doctorEmail = params.get("doctor_email");
+let patientData = {};
+
+async function loadPatientRecord() {
+  const response = await fetch(`/api/get_patient?email=${patientEmail}`);
+  const patientArray = await response.json();
+
+  patientData = {};
+  patientArray.forEach(obj => {
+      patientData[obj.field] = obj.value;
+  });
+
+  renderFields();
+}
+
+function renderFields() {
+  const container = document.getElementById("recordContainer");
+  container.innerHTML = "";
+
+  for (const [fieldName, fieldValue] of Object.entries(patientData)) {
+      const row = document.createElement("div");
+      row.className = "field-row";
+
+      const label = document.createElement("span");
+      label.textContent = fieldName.replace("_", " ");
+
+      const textarea = document.createElement("textarea");
+      textarea.value = fieldValue;
+      textarea.disabled = true;
+
+      row.appendChild(label);
+      row.appendChild(textarea);
+      container.appendChild(row);
+  }
+}
+
+function downloadRecord() {
+  let textContent = "";
+  for (const [key, value] of Object.entries(patientData)) {
+      textContent += `${key.replace("_", " ")}: ${value}\n`;
+  }
+  const blob = new Blob([textContent], { type: "text/plain" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "Patient_Record.txt";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function toggleWindow(type) {
+  const win = document.getElementById('sideWindow');
+  const title = document.getElementById('windowTitle');
+  const recordWrapper = document.getElementById('recordWrapper');
+
+  if (currentWindow === type) {
+      win.style.display = 'none';
+      document.getElementById('recordContainer').style.width = '60%';
+      recordWrapper.style.justifyContent = 'center';
+      currentWindow = null;
+      return;
+  }
+
+  currentWindow = type;
+  win.style.display = 'block';
+  document.getElementById('recordContainer').style.width = '55%';
+  recordWrapper.style.justifyContent = 'flex-start';
+
+  title.textContent = type === 'summarize' ? 'Summarize Record' : 'Compare Record';
+  document.getElementById('promptBox').value = '';
+  document.getElementById('responseArea').textContent = '';
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+  const sendBtn = document.getElementById("sendBtn");
+  if (sendBtn) {
+    sendBtn.addEventListener("click", async () => {
+      const promptText = document.getElementById("promptBox").value.trim();
+      if (!promptText) return;
+      document.getElementById("responseArea").textContent = "Processing...";
+
+      if (currentWindow === 'summarize') {
+          // === Summarize API call ===
+          try {
+              const response = await fetch('/summarize', {
+                  method: 'POST',
+                  headers: {
+                      'Content-Type': 'application/json',
+                      'X-CSRFToken': csrfToken
+                  },
+                  body: JSON.stringify({ record: patientData, prompt: promptText })
+              });
+
+              if (response.ok) {
+                  const respJson = await response.json();
+                  document.getElementById("responseArea").textContent = respJson.summary_text || "No summary returned.";
+              } else {
+                  document.getElementById("responseArea").textContent = `Error: ${response.status}`;
+              }
+          } catch (err) {
+              document.getElementById("responseArea").textContent = `Network error: ${err.message}`;
+          }
+
+      } else if (currentWindow === 'compare') {
+          // === Compare API call ===
+          try {
+              const response = await fetch('/similar_patients', {
+                  method: 'POST',
+                  headers: {
+                      'Content-Type': 'application/json',
+                      'X-CSRFToken': csrfToken
+                  },
+                  body: JSON.stringify({ email: patientEmail, prompt: promptText })
+              });
+
+              if (response.ok) {
+                  const respJson = await response.json();
+                  // Display each similar patient email on a new line
+                  document.getElementById("responseArea").textContent = respJson.similar_patients.join('\n') || "No similar patients found.";
+              } else {
+                  document.getElementById("responseArea").textContent = `Error: ${response.status}`;
+              }
+          } catch (err) {
+              document.getElementById("responseArea").textContent = `Network error: ${err.message}`;
+          }
+
+      }
+    });
+  }
+});
+
+document.getElementById("downloadBtn").addEventListener("click", downloadRecord);
+document.getElementById("summarizeBtn").addEventListener("click", () => toggleWindow('summarize'));
+document.getElementById("compareBtn").addEventListener("click", () => toggleWindow('compare'));
+document.getElementById("backBtn").addEventListener("click", () => {
+  window.location.href = `/provider_portal?email=${encodeURIComponent(doctorEmail)}&view=patients`;
+});
+
+window.addEventListener("load", loadPatientRecord);
+</script>
+
+<div id="sideWindow" style="display:none; position:fixed; right:0; top:80px; width:40%; height:calc(100% - 80px); background:#ffffff; border-left:2px solid #ccc; padding:20px; overflow-y:auto;">
+  <h2 id="windowTitle"></h2>
+  <textarea id="promptBox" style="width:100%; height:40px; box-sizing:border-box; resize:none; font-size:16px; padding:5px; overflow:hidden;" oninput="this.style.height='40px'; this.style.height=Math.max(40, this.scrollHeight)+'px';"></textarea>
+  <button id="sendBtn" style="margin-top:10px; padding:8px 16px; font-size:16px;">Send</button>
+  <div id="responseArea" style="margin-top:20px; white-space:pre-wrap; font-size:16px;"></div>
+</div>
+
+</body>
+</html>

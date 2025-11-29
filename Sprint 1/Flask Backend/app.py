@@ -92,6 +92,10 @@ def login():
 def edit_record_page():
     return render_template("edit_record_page.html")
 
+@app.route("/view_record_page")
+def view_record_page():
+    return render_template("view_record_page.html")
+
 # Get patient data for edit_record_page
 @app.route("/api/get_patient")
 def api_get_patient():
@@ -214,10 +218,12 @@ def similar_patients():
     email = payload.get("email")
     prompt = payload.get("prompt", "")
 
+    db = connectDatabase()
+
     if not isinstance(email, str):
         return jsonify({"error": "email must be a string"}), 400
 
-    top_emails, fields_used = find_similar_patients(email, prompt)
+    top_emails, fields_used = find_similar_patients(db, email, prompt)
     return jsonify({
         "target_email": email,
         "similar_patients": top_emails,
