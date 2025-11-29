@@ -161,9 +161,10 @@ function saveRecord() {
   if (confirm("Are you sure you want to save all changes?")) {
     const updatedFields = {};
     document.querySelectorAll("textarea[data-field]").forEach(textarea => {
-        const fieldWithUnderscore = textarea.dataset.field.replace(" ", "_");
-        updatedFields[fieldWithUnderscore] = textarea.value;
-    });
+      const fieldWithUnderscore = textarea.dataset.field.replace(" ", "_");
+      const value = textarea.value.trim() === "" ? null : textarea.value;
+      updatedFields[fieldWithUnderscore] = value;
+  });
 
     fetch("/api/update_record", {
       method: "POST",

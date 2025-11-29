@@ -230,6 +230,11 @@ def similar_patients():
         "fields_compared": fields_used
     }), 200
 
+def clean_embedding_field(value):
+    if value is None:
+        return ""
+    return value
+
 class SignUp(FlaskForm):
     patient_or_provider = RadioField("Are you a patient or a provider?", choices=[('patient', 'Patient'), ('provider', 'Provider')], validators=[InputRequired()])
 

@@ -27,7 +27,6 @@ def fetch_embedding(dbConnection, email, field_name):
 
     row = cursor.fetchone()
     cursor.close()
-    dbConnection.close()
 
     # No row or NULL field → return None
     if row is None or row[0] is None:
