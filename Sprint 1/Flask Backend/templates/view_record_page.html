@@ -77,16 +77,31 @@ const patientEmail = params.get("email");
 const doctorEmail = params.get("doctor_email");
 let patientData = {};
 
+// Returns patient data as an array
+async function getPatientObject(email) {
+    try {
+        const response = await fetch(`/api/get_patient?email=${email}`);
+        const patientArray = await response.json();
+        if (!Array.isArray(patientArray)) return { error: "Invalid response format" };
+
+        const patientObj = {};
+        patientArray.forEach(entry => {
+            patientObj[entry.field] = entry.value;
+        });
+
+        return patientObj;
+    } catch (err) {
+        return { error: err.message };
+    }
+}
+
 async function loadPatientRecord() {
-  const response = await fetch(`/api/get_patient?email=${patientEmail}`);
-  const patientArray = await response.json();
+    patientData = await getPatientObject(patientEmail);
+    renderFields();
+}
 
-  patientData = {};
-  patientArray.forEach(obj => {
-      patientData[obj.field] = obj.value;
-  });
-
-  renderFields();
+async function fetchPatientInfo(email) {
+    return await getPatientObject(email);
 }
 
 function renderFields() {
@@ -130,12 +145,15 @@ function toggleWindow(type) {
   const win = document.getElementById('sideWindow');
   const title = document.getElementById('windowTitle');
   const recordWrapper = document.getElementById('recordWrapper');
+  const numWrapper = document.getElementById("numSimilarWrapper");
 
   if (currentWindow === type) {
       win.style.display = 'none';
       document.getElementById('recordContainer').style.width = '60%';
       recordWrapper.style.justifyContent = 'center';
       currentWindow = null;
+
+      numWrapper.style.display = 'none';
       return;
   }
 
@@ -147,6 +165,9 @@ function toggleWindow(type) {
   title.textContent = type === 'summarize' ? 'Summarize Record' : 'Compare Record';
   document.getElementById('promptBox').value = '';
   document.getElementById('responseArea').textContent = '';
+
+  // show number of patients text box only for compare window
+  numWrapper.style.display = (type === 'compare') ? 'block' : 'none';
 }
 
 window.addEventListener("DOMContentLoaded", () => {
@@ -154,7 +175,14 @@ window.addEventListener("DOMContentLoaded", () => {
   if (sendBtn) {
     sendBtn.addEventListener("click", async () => {
       const promptText = document.getElementById("promptBox").value.trim();
-      if (!promptText) return;
+
+      if (!promptText) {
+        document.getElementById("responseArea").style.color = "red";
+        document.getElementById("responseArea").textContent = "Please enter a prompt.";
+        return;
+      }
+
+      document.getElementById("responseArea").style.color = "black";
       document.getElementById("responseArea").textContent = "Processing...";
 
       if (currentWindow === 'summarize') {
@@ -166,42 +194,107 @@ window.addEventListener("DOMContentLoaded", () => {
                       'Content-Type': 'application/json',
                       'X-CSRFToken': csrfToken
                   },
-                  body: JSON.stringify({ record: patientData, prompt: promptText })
+                  body: JSON.stringify({ 
+                    record: patientData, 
+                    prompt: promptText 
+                  })
               });
 
               if (response.ok) {
                   const respJson = await response.json();
+                  document.getElementById("responseArea").style.color = "black";
                   document.getElementById("responseArea").textContent = respJson.summary_text || "No summary returned.";
               } else {
+                  document.getElementById("responseArea").style.color = "red";
                   document.getElementById("responseArea").textContent = `Error: ${response.status}`;
               }
           } catch (err) {
+              document.getElementById("responseArea").style.color = "red";
               document.getElementById("responseArea").textContent = `Network error: ${err.message}`;
           }
 
       } else if (currentWindow === 'compare') {
-          // === Compare API call ===
-          try {
-              const response = await fetch('/similar_patients', {
-                  method: 'POST',
-                  headers: {
-                      'Content-Type': 'application/json',
-                      'X-CSRFToken': csrfToken
-                  },
-                  body: JSON.stringify({ email: patientEmail, prompt: promptText })
+        // Read number of patients from the input box
+        const numInput = document.getElementById("numSimilarInput");
+        let numSimilar = parseInt(numInput.value);
+
+        if (isNaN(numSimilar) || numSimilar < 1 || numSimilar > 100) {
+          document.getElementById("responseArea").style.color = "red";  
+          document.getElementById("responseArea").textContent =
+                "Please enter a number between 1 and 100.";
+            return;
+        }
+
+        // === Compare API call ===
+        try {
+            const response = await fetch('/similar_patients', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({
+                    email: patientEmail,
+                    prompt: promptText,
+                    num_similar: numSimilar
+                })
+            });
+
+            if (response.ok) {
+              const respJson = await response.json();
+              document.getElementById("responseArea").style.color = "black";
+              
+              const responseArea = document.getElementById("responseArea");
+              responseArea.innerHTML = "";  // clear text first
+
+              respJson.similar_patients.forEach(email => {
+                  const detailsElem = document.createElement("details");
+                  detailsElem.style.marginBottom = "12px";
+
+                  const summaryElem = document.createElement("summary");
+                  summaryElem.textContent = email;
+                  summaryElem.style.cursor = "pointer";
+                  summaryElem.style.fontSize = "18px";
+                  summaryElem.style.fontWeight = "bold";
+
+                  const contentElem = document.createElement("div");
+                  contentElem.textContent = "Loading...";
+                  contentElem.style.marginLeft = "15px";
+                  contentElem.style.whiteSpace = "pre-wrap";
+
+                  // Load patient info when the user clicks on the email
+                  detailsElem.addEventListener("toggle", async () => {
+                    if (detailsElem.open) {
+                        const data = await fetchPatientInfo(email);
+
+                        if (data.error) {
+                            contentElem.textContent = "Could not load patient info.";
+                            return;
+                        }
+
+                        let formatted = "";
+                        for (const [field, value] of Object.entries(data)) {
+                            formatted += `${field.replace("_", " ")}: ${value}\n`;
+                        }
+
+                        contentElem.textContent = formatted;
+                    }
+                  });
+                  detailsElem.appendChild(summaryElem);
+                  detailsElem.appendChild(contentElem);
+                  responseArea.appendChild(detailsElem);
               });
 
-              if (response.ok) {
-                  const respJson = await response.json();
-                  // Display each similar patient email on a new line
-                  document.getElementById("responseArea").textContent = respJson.similar_patients.join('\n') || "No similar patients found.";
-              } else {
-                  document.getElementById("responseArea").textContent = `Error: ${response.status}`;
-              }
-          } catch (err) {
-              document.getElementById("responseArea").textContent = `Network error: ${err.message}`;
-          }
-
+            } else {
+                document.getElementById("responseArea").style.color = "red";
+                document.getElementById("responseArea").textContent =
+                    `Error: ${response.status}`;
+            }
+        } catch (err) {
+            document.getElementById("responseArea").style.color = "red";
+            document.getElementById("responseArea").textContent =
+                `Network error: ${err.message}`;
+        }
       }
     });
   }
@@ -220,9 +313,21 @@ window.addEventListener("load", loadPatientRecord);
 <div id="sideWindow" style="display:none; position:fixed; right:0; top:80px; width:40%; height:calc(100% - 80px); background:#ffffff; border-left:2px solid #ccc; padding:20px; overflow-y:auto;">
   <h2 id="windowTitle"></h2>
   <textarea id="promptBox" style="width:100%; height:40px; box-sizing:border-box; resize:none; font-size:16px; padding:5px; overflow:hidden;" oninput="this.style.height='40px'; this.style.height=Math.max(40, this.scrollHeight)+'px';"></textarea>
+  <div id="numSimilarWrapper" style="display:none; margin-top:10px;">
+    <label for="numSimilarInput" style="font-size:16px; font-weight:bold;">
+      Number of patients to compare:
+    </label>
+    <input 
+      id="numSimilarInput"
+      type="number"
+      min="1"
+      max="100"
+      value="5"
+      style="width:120px; padding:5px; font-size:16px; margin-left:8px;"
+    >
+  </div>
   <button id="sendBtn" style="margin-top:10px; padding:8px 16px; font-size:16px;">Send</button>
   <div id="responseArea" style="margin-top:20px; white-space:pre-wrap; font-size:16px;"></div>
 </div>
-
 </body>
 </html>

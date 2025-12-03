@@ -14,7 +14,7 @@ AVAILABLE_FIELDS = [
 ] # TODO Get from database so not hardcoded?
 
 LLM_MODEL = "gpt-oss:20b-cloud"
-NUM_SIMILAR_PATIENTS = 3 #TODO Make configurable later?
+NUM_SIMILAR_PATIENTS = 5
 seed = 69
 
 
@@ -96,7 +96,7 @@ def load_patient_field_embeddings(dbConnection, email, fields):
 # MAIN SEARCH FUNCTION
 # ===============================
 
-def find_similar_patients(dbConnection, target_email: str, prompt: str = ""):
+def find_similar_patients(dbConnection, target_email: str, prompt: str = "", num_similar: int = NUM_SIMILAR_PATIENTS):
     
     # 1. Load list of all patients
     all_emails = load_all_emails(dbConnection)
@@ -141,6 +141,6 @@ def find_similar_patients(dbConnection, target_email: str, prompt: str = ""):
     # 5. Sort by similarity
     similarities.sort(key=lambda x: x[1], reverse=True)
 
-    top_matches = [email for email, _ in similarities[:NUM_SIMILAR_PATIENTS]]
+    top_matches = [email for email, _ in similarities[:num_similar]]
 
     return top_matches, fields_to_compare

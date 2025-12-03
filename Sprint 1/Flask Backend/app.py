@@ -217,13 +217,14 @@ def similar_patients():
     payload = request.get_json(force=True)
     email = payload.get("email")
     prompt = payload.get("prompt", "")
+    num_similar = payload.get("num_similar", 5)
 
     db = connectDatabase()
 
     if not isinstance(email, str):
         return jsonify({"error": "email must be a string"}), 400
 
-    top_emails, fields_used = find_similar_patients(db, email, prompt)
+    top_emails, fields_used = find_similar_patients(db, email, prompt, num_similar)
     return jsonify({
         "target_email": email,
         "similar_patients": top_emails,
