@@ -105,3 +105,65 @@ VALUES
 
 ('user22@example.com', 'Victor', 'Lee', 'patient', '$2b$12$Vam60GL5xHEvpq/6EfMINOByfVe/7.tBwWBY/jhIPgroXT28yxUmO',
  44, '(123)-111-1132', 'M', '200', '72', '', '', 'Back Pain', 'Back Surgery', '', '2025-01-22');
+
+#######################################
+
+INSERT INTO users 
+(Email, First_Name, Last_Name, PatientOrProvider, PasswordHash, Age, Phone_Number,
+ Sex, Weight, Height, Medications, Allergies, Active_Problems, Medical_History, 
+ Family_History, Date_Updated)
+VALUES
+("jane.doe12@example.com", "Jane", "Doe", "Patient", "$2a$10$7nA8uGkR2bYf1e3LmT9ViO", 
+34, "555-291-4478", "F", 148, 64, "Lisinopril 10mg daily", "Penicillin", "Hypertension", "No major surgeries; mild anxiety", "Type 2 diabetes", "2025-01-15"),
+
+("michael.roberts@example.com", "Michael", "Roberts", "Patient", "$2a$10$4h2Mks84qyEUw9O6jYF1xe",
+52, "555-813-2299", "M", 192, 70, "Metformin 500mg BID; Atorvastatin 20mg daily", " ", "Type 2 diabetes; High cholesterol", "Appendectomy", "Breast cancer", "2025-02-01"),
+
+("samira.khan@example.com", "Samira", "Khan", "Patient", "$2a$10$Qa9VxP2lKnsu19T03eO5Ku",
+27, "555-442-7811", "F", 132, 65, " ", "Shellfish, pollen", "Mild asthma", "Tonsillectomy", " ", "2025-03-10"),
+
+("tyler.benson@example.com", "Tyler", "Benson", "Patient", "$2a$10$12sJPM4r9YQeX7Rmj8JgHe",
+41, "555-998-1144", "M", 210, 72, "Omeprazole 20mg daily", "Ibuprofen", "GERD (acid reflux)", "Knee surgery", "Heart disease", "2025-01-28"),
+
+("ana.silva@example.com", "Ana", "Silva", "Patient", "$2a$10$Ls82pFT0KZp3W4cUDvQJk.",
+63, "555-334-9090", "F", 160, 63, "Amlodipine 5mg daily", "Latex", "Hypertension", "Cataract surgery", "Rheumatoid arthritis", "2025-02-17"),
+
+("mark.caldwell@example.com", "Mark", "Caldwell", "Patient", "$2a$10$9kdP8K1uEw0Z3bFv1R1y8e",
+47, "555-771-2044", "M", 185, 71, "Losartan 50mg daily", "Aspirin", "Chronic back pain", "Herniated disc surgery", "Stroke", "2025-03-01"),
+
+("emily.rivera@example.com", "Emily", "Rivera", "Patient", "$2a$10$X4Pz8mLsQx7w2CfS3oN8Km",
+22, "555-618-3309", "F", 118, 62, "Albuterol inhaler PRN", "Peanuts", "Asthma", " ", "Asthma", "2025-03-12"),
+
+("david.nguyen@example.com", "David", "Nguyen", "Patient", "$2a$10$Z2cF8kPsUe4gA9LmT2B9Js",
+58, "555-882-7710", "M", 170, 69, "Levothyroxine 75mcg daily", "None", "Hypothyroidism", "Gallbladder removal", "Thyroid issues", "2025-01-30"),
+
+("lucia.martinez@example.com", "Lucia", "Martinez", "Patient", "$2a$10$Wd72mJx4Qns9F8aLtK3yGu",
+31, "555-529-4411", "F", 140, 66, "Sertraline 50mg daily", "Sulfa drugs", "Generalized anxiety disorder", "Wisdom tooth extraction", "Depression", "2025-02-22"),
+
+("brandon.holt@example.com", "Brandon", "Holt", "Patient", "$2a$10$Ft93pLm1B0uX4ReT8sMm92",
+36, "555-410-9922", "M", 200, 73, "None", "Tree nuts", "Seasonal allergies", "Nasal polyp removal", "Type 1 diabetes", "2025-03-05");
+
+###############################################
+
+
+INSERT INTO accessMap (connectionUID, doctor, patient)
+VALUES
+('13',  'sally@sally.com', 'jane.doe12@example.com'),
+('14',  'sally@sally.com', 'michael.roberts@example.com'),
+('15',  'sally@sally.com', 'samira.khan@example.com'),
+('16',  'sally@sally.com', 'tyler.benson@example.com'),
+('17',  'sally@sally.com', 'ana.silva@example.com'),
+('18',  'sally@sally.com', 'mark.caldwell@example.com'),
+('19',  'sally@sally.com', 'emily.rivera@example.com'),
+('20',  'sally@sally.com', 'david.nguyen@example.com'),
+('21',  'sally@sally.com', 'lucia.martinez@example.com'),
+('22',  'sally@sally.com', 'brandon.holt@example.com');
+
+
+
+
+
+
+
+
+
