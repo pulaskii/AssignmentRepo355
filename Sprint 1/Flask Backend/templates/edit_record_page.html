@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
+
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+
   <style>
     #saveBtn, #undoBtn, #downloadBtn, #backBtn {
       padding: 10px 20px;
@@ -37,7 +40,7 @@
     }
 
     .field-row span {
-      width: 120px;
+      width: 150px;
       padding-top: 6px;
     }
 
@@ -67,21 +70,25 @@
 </div>
 
 <script>
+const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
 // Get email from URL
 const params = new URLSearchParams(window.location.search);
 const patientEmail = params.get("email");
 const doctorEmail = params.get("doctor_email");
 
 let patientData = {};  // current data in textboxes
-let originalPatientData = {}; // backup for undo  // will be filled from backend later
+let originalPatientData = {}; // backup for undo
 
-// Pseudocode: request actual data from backend
 async function loadPatientRecord() {
     const response = await fetch(`/api/get_patient?email=${patientEmail}`);
-    patientData = await response.json();
+    const patientArray = await response.json();
 
-    originalPatientData = JSON.parse(JSON.stringify(patientData)); // Make a deep copy for undo
+    patientData = {};
+    patientArray.forEach(obj => {
+        patientData[obj.field] = obj.value;
+    });
 
+    originalPatientData = JSON.parse(JSON.stringify(patientData));
     renderFields();
 }
 
@@ -152,23 +159,25 @@ function undoChanges() {
 
 function saveRecord() {
   if (confirm("Are you sure you want to save all changes?")) {
-
-    // Read all textarea values and make sure field names have underscores
     const updatedFields = {};
     document.querySelectorAll("textarea[data-field]").forEach(textarea => {
-        const fieldWithUnderscore = textarea.dataset.field.replace(" ", "_"); 
-        updatedFields[fieldWithUnderscore] = textarea.value;
-    });
-
-    console.log("Saved data:", updatedFields);
+      const fieldWithUnderscore = textarea.dataset.field.replace(" ", "_");
+      const value = textarea.value.trim() === "" ? null : textarea.value;
+      updatedFields[fieldWithUnderscore] = value;
+  });
 
     fetch("/api/update_record", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            email : patientEmail,
-            updated_fields: updatedFields
-        })
+      method: "POST",
+      headers: { 
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrfToken
+      },
+      body: JSON.stringify({
+        email: patientEmail,
+        updated_fields: updatedFields
+      })
+    }).then(() => {
+        originalPatientData = JSON.parse(JSON.stringify(updatedFields));
     });
   }
 }
@@ -177,7 +186,7 @@ document.getElementById("downloadBtn").addEventListener("click", downloadRecord)
 document.getElementById("undoBtn").addEventListener("click", undoChanges);
 document.getElementById("saveBtn").addEventListener("click", saveRecord);
 document.getElementById("backBtn").addEventListener("click", () => {
-  window.location.href = `/provider_portal?doctor_email=${encodeURIComponent(doctorEmail)}&view=patients`;
+  window.location.href = `/provider_portal?email=${encodeURIComponent(doctorEmail)}&view=patients`;
 });
 
 window.addEventListener("load", loadPatientRecord);

@@ -10,14 +10,24 @@ from pyModules.sqlpy.createAccountRow import addNewUser
 from pyModules.sqlpy.fetchData import fetchUserData
 from pyModules.sqlpy.saveData import saveUserData
 from pyModules.sqlpy.fetchAccessMap import fetchAccessMap
+from pyModules.sqlpy.saveEmbedding import save_embedding
+from pyModules.sqlpy.fetchAnonymizedData import fetchAnonymizedUserData
 import os
 from dotenv import load_dotenv
+import numpy as np
+import ollama
+from typing import Dict
+from pyModules.ollama.summarization import call_llm_summary
+from pyModules.ollama.comparison import find_similar_patients
 
 app = Flask(__name__)
 load_dotenv()
 app.config["SECRET_KEY"] = os.getenv("CONFIG_KEY")
 csrf = CSRFProtect(app)
 bcrypt = Bcrypt(app)
+
+EMBEDDING_MODEL = "embeddinggemma"
+EXCLUDED_FIELDS = ["First_Name", "Last_Name", "Email", "Phone_Number", "Date_Updated"]  # fields to skip for per-field embeddings
 
 @app.route("/")
 def home():
@@ -83,6 +93,10 @@ def login():
 def edit_record_page():
     return render_template("edit_record_page.html")
 
+@app.route("/view_record_page")
+def view_record_page():
+    return render_template("view_record_page.html")
+
 # Get patient data for edit_record_page
 @app.route("/api/get_patient")
 def api_get_patient():
@@ -91,25 +105,74 @@ def api_get_patient():
     db = connectDatabase()
     result = fetchUserData(email, db)
 
-    if isinstance(result, dict):
+    if result:
         return jsonify(result)
 
     return jsonify({"error": "Could not fetch user"}), 400
 
-# Save updated patient data from edit_record_page
+# Get panonymized atient data for view_record_page
+@app.route("/api/get_anonymized_patient")
+def get_anonymized_patient():
+    email = request.args.get("email")
+
+    db = connectDatabase()
+    result = fetchAnonymizedUserData(email, db)
+
+    if result:
+        return jsonify(result)
+
+    return jsonify({"error": "Could not fetch user"}), 400
+
+# Save updated patient data and embeddings from edit_record_page
 @app.route("/api/update_record", methods=["POST"])
 def api_update_record():
     data = request.get_json()
     updated_fields = data.get("updated_fields")
     email = data.get("email")
 
+    # --- Save updated fields to user table ---
     for column, value in updated_fields.items():
-        saveUserData(userEmail=email,
-                     dbConnection=connectDatabase(),
-                     columnToSet=column,
-                     valueToSet=value)
+        saveUserData(
+            userEmail=email,
+            dbConnection=connectDatabase(),
+            columnToSet=column,
+            valueToSet=value
+        )
 
-    return jsonify({"message": "Record saved"})
+    # --- Create embeddings for updated patient record ---
+    patient_record = {**updated_fields, "Email": email}
+
+    # Per-field embeddings
+    for field, value in patient_record.items():
+        if field in EXCLUDED_FIELDS:
+            continue
+
+        # If the value is empty, save None (NULL)
+        if value is None or str(value).strip() == "":
+            vec = None
+        else:
+            vec = embed(str(value))
+        
+        save_embedding(connectDatabase(), email, field, vec)
+
+
+    # Full record embedding
+    full_text = build_full_record_text(patient_record)
+    full_vec = embed(full_text)
+
+    save_embedding(connectDatabase(), email, "Full_Record", full_vec)
+
+    return jsonify({"message": "Record saved and embeddings updated"})
+
+def embed(text: str):
+    """Generate embedding using Ollama."""
+    batch = ollama.embed(model=EMBEDDING_MODEL, input=[text])
+    return np.array(batch["embeddings"][0], dtype=np.float32)
+
+
+def build_full_record_text(patient: dict) -> str:
+    """Concatenate all patient fields into a single string, excluding Email."""
+    return " ".join(str(v) for k, v in patient.items() if k not in EXCLUDED_FIELDS)
 
 @app.route('/provider_portal')
 def provider():
@@ -138,8 +201,57 @@ def api_fetch_access_map():
         print("ERROR:", e)
         return jsonify({"error": "Failed to fetch access map"}), 500
 
+# === Flask endpoints ===
+@app.route("/summarize", methods=["POST"])
+def summarize():
+    payload = request.get_json(force=True)
+    record: Dict = payload.get("record", {})
+    prompt: str = payload.get("prompt", "")
+
+    if not isinstance(record, dict):
+        return jsonify({"error": "record must be an object/dict"}), 400
+    if not isinstance(prompt, str):
+        return jsonify({"error": "prompt must be a string"}), 400
+
+    summaries = call_llm_summary(record, prompt)
+    requested_fields = [s.field for s in summaries]
+    missing_fields = [f for f in record.keys() if f not in requested_fields]
+
+    response_json = {
+        "requested_fields": requested_fields,
+        "missing_fields": missing_fields,
+        "summaries": [s.model_dump() for s in summaries],
+        "error": None,
+        "summary_text": "\n".join(s.summary for s in summaries)
+    }
+    return jsonify(response_json), 200
+
+@app.route("/similar_patients", methods=["POST"])
+def similar_patients():
+    payload = request.get_json(force=True)
+    email = payload.get("email")
+    prompt = payload.get("prompt", "")
+    num_similar = payload.get("num_similar", 5)
+
+    db = connectDatabase()
+
+    if not isinstance(email, str):
+        return jsonify({"error": "email must be a string"}), 400
+
+    top_emails, fields_used = find_similar_patients(db, email, prompt, num_similar)
+    return jsonify({
+        "target_email": email,
+        "similar_patients": top_emails,
+        "fields_compared": fields_used
+    }), 200
+
+def clean_embedding_field(value):
+    if value is None:
+        return ""
+    return value
+
 class SignUp(FlaskForm):
-    patient_or_provider = RadioField("Are you a patient or a provider?", choices=[('Patient', 'Patient'), ('Provider', 'Provider')], validators=[InputRequired()])
+    patient_or_provider = RadioField("Are you a patient or a provider?", choices=[('patient', 'Patient'), ('provider', 'Provider')], validators=[InputRequired()])
 
     first_name = StringField("Enter your first name", validators = [validators.DataRequired(message = "First name is required")], render_kw = {'placeholder': "John"})
     

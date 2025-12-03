@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+
+  <style>
+    #downloadBtn, #backBtn, #summarizeBtn, #compareBtn {
+      padding: 10px 20px;
+      font-size: 16px;
+    }
+
+    .button-container {
+      width: 80%;
+      margin: 0 auto;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    #recordWrapper {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      width: 100%;
+      margin-top: 20px;
+      transition: justify-content 0.3s;
+    }
+
+    #recordContainer {
+      width: 60%;
+      transition: width 0.3s;
+    }
+
+    .field-row {
+      width: 100%;
+      margin: 10px auto;
+      display: flex;
+      justify-content: flex-start;
+      gap: 8px;
+      align-items: flex-start;
+      font-size: 18px;
+    }
+
+    .field-row span {
+      width: 150px;
+      padding-top: 6px;
+    }
+
+    .field-row textarea {
+      flex: 1;
+      padding: 5px;
+      font-size: 16px;
+      min-height: 30px;
+      resize: none;
+      background-color: #f0f0f0;
+      border: 1px solid #ccc;
+    }
+  </style>
+</head>
+<body>
+
+<div class="button-container">
+  <button id="backBtn">Back</button>
+  <button id="downloadBtn">Download</button>
+  <button id="summarizeBtn">Summarize</button>
+  <button id="compareBtn">Compare</button>
+</div>
+
+<div id="recordWrapper">
+  <div id="recordContainer">Loading patient record...</div>
+</div>
+
+<script>
+let currentWindow = null;
+const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+const params = new URLSearchParams(window.location.search);
+const patientEmail = params.get("email");
+const doctorEmail = params.get("doctor_email");
+let patientData = {};
+let doctorAccessMap = [];
+
+// Returns patient data as an array
+async function getPatientArray(email) {
+    try {
+        const response = await fetch(`/api/get_patient?email=${email}`);
+        const patientArray = await response.json();
+        if (!Array.isArray(patientArray)) return { error: "Invalid response format" };
+
+        const patientObj = {};
+        patientArray.forEach(entry => {
+            patientObj[entry.field] = entry.value;
+        });
+
+        return patientObj;
+    } catch (err) {
+        return { error: err.message };
+    }
+}
+
+async function getAnonymizedPatientArray(email) {
+    try {
+        const response = await fetch(`/api/get_anonymized_patient?email=${email}`);
+        const patientArray = await response.json();
+        if (!Array.isArray(patientArray)) return { error: "Invalid response format" };
+
+        const patientObj = {};
+        patientArray.forEach(entry => {
+            patientObj[entry.field] = entry.value;
+        });
+
+        return patientObj;
+    } catch (err) {
+        return { error: err.message };
+    }
+}
+
+async function loadPatientRecord() {
+    patientData = await getPatientArray(patientEmail);
+    renderFields();
+    loadDoctorAccessMap();
+}
+
+async function loadDoctorAccessMap() {
+    try {
+        const response = await fetch(`/api/fetch_access_map?email=${encodeURIComponent(doctorEmail)}&type=doctor`);
+        const data = await response.json();
+        if (!data.error) {
+            doctorAccessMap = data; // store globally
+        } else {
+            console.error("Error fetching access map:", data.error);
+        }
+    } catch (err) {
+        console.error("Error fetching access map:", err);
+    }
+}
+
+async function fetchPatientInfo(email) {
+    // 1. Check if the doctor has access to this patient
+    const hasAccess = doctorAccessMap.some(row => row[2] === email);
+
+    // 2. Fetch the appropriate data
+    if (hasAccess) {
+        return await getPatientArray(email);  // full data
+    } else {
+        return await getAnonymizedPatientArray(email);  // anonymized
+    }
+}
+
+function renderFields() {
+  const container = document.getElementById("recordContainer");
+  container.innerHTML = "";
+
+  for (const [fieldName, fieldValue] of Object.entries(patientData)) {
+      const row = document.createElement("div");
+      row.className = "field-row";
+
+      const label = document.createElement("span");
+      label.textContent = fieldName.replace("_", " ");
+
+      const textarea = document.createElement("textarea");
+      textarea.value = fieldValue;
+      textarea.disabled = true;
+
+      row.appendChild(label);
+      row.appendChild(textarea);
+      container.appendChild(row);
+  }
+}
+
+function downloadRecord() {
+  let textContent = "";
+  for (const [key, value] of Object.entries(patientData)) {
+      textContent += `${key.replace("_", " ")}: ${value}\n`;
+  }
+  const blob = new Blob([textContent], { type: "text/plain" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "Patient_Record.txt";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function toggleWindow(type) {
+  const win = document.getElementById('sideWindow');
+  const title = document.getElementById('windowTitle');
+  const recordWrapper = document.getElementById('recordWrapper');
+  const numWrapper = document.getElementById("numSimilarWrapper");
+
+  if (currentWindow === type) {
+      win.style.display = 'none';
+      document.getElementById('recordContainer').style.width = '60%';
+      recordWrapper.style.justifyContent = 'center';
+      currentWindow = null;
+
+      numWrapper.style.display = 'none';
+      return;
+  }
+
+  currentWindow = type;
+  win.style.display = 'block';
+  document.getElementById('recordContainer').style.width = '55%';
+  recordWrapper.style.justifyContent = 'flex-start';
+
+  title.textContent = type === 'summarize' ? 'Summarize Record' : 'Compare Record';
+  document.getElementById('promptBox').value = '';
+  document.getElementById('responseArea').textContent = '';
+
+  // show number of patients text box only for compare window
+  numWrapper.style.display = (type === 'compare') ? 'block' : 'none';
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+  const sendBtn = document.getElementById("sendBtn");
+  if (sendBtn) {
+    sendBtn.addEventListener("click", async () => {
+      const promptText = document.getElementById("promptBox").value.trim();
+
+      if (!promptText) {
+        document.getElementById("responseArea").style.color = "red";
+        document.getElementById("responseArea").textContent = "Please enter a prompt.";
+        return;
+      }
+
+      document.getElementById("responseArea").style.color = "black";
+      document.getElementById("responseArea").textContent = "Processing...";
+
+      if (currentWindow === 'summarize') {
+          // === Summarize API call ===
+          try {
+              const response = await fetch('/summarize', {
+                  method: 'POST',
+                  headers: {
+                      'Content-Type': 'application/json',
+                      'X-CSRFToken': csrfToken
+                  },
+                  body: JSON.stringify({ 
+                    record: patientData, 
+                    prompt: promptText 
+                  })
+              });
+
+              if (response.ok) {
+                  const respJson = await response.json();
+                  document.getElementById("responseArea").style.color = "black";
+                  document.getElementById("responseArea").textContent = respJson.summary_text || "No summary returned.";
+              } else {
+                  document.getElementById("responseArea").style.color = "red";
+                  document.getElementById("responseArea").textContent = `Error: ${response.status}`;
+              }
+          } catch (err) {
+              document.getElementById("responseArea").style.color = "red";
+              document.getElementById("responseArea").textContent = `Network error: ${err.message}`;
+          }
+
+      } else if (currentWindow === 'compare') {
+        // Read number of patients from the input box
+        const numInput = document.getElementById("numSimilarInput");
+        let numSimilar = parseInt(numInput.value);
+
+        if (isNaN(numSimilar) || numSimilar < 1 || numSimilar > 100) {
+          document.getElementById("responseArea").style.color = "red";  
+          document.getElementById("responseArea").textContent =
+                "Please enter a number between 1 and 100.";
+            return;
+        }
+
+        // === Compare API call ===
+        try {
+            const response = await fetch('/similar_patients', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({
+                    email: patientEmail,
+                    prompt: promptText,
+                    num_similar: numSimilar
+                })
+            });
+
+            if (response.ok) {
+                const respJson = await response.json();
+                const responseArea = document.getElementById("responseArea");
+
+                // Map display names to real emails
+                const emailMap = {};
+
+                // Helper function to generate pseudonyms like A, B, ..., Z, AA, AB, ...
+                function getPseudonym(index) {
+                    let letters = "";
+                    while (index >= 0) {
+                        letters = String.fromCharCode(65 + (index % 26)) + letters;
+                        index = Math.floor(index / 26) - 1;
+                    }
+                    return `Patient ${letters}`;
+                }
+
+                responseArea.innerHTML = "";  // clear previous content
+
+                respJson.similar_patients.forEach((email, index) => {
+                    const pseudonym = getPseudonym(index);
+                    emailMap[pseudonym] = email;
+
+                    const detailsElem = document.createElement("details");
+                    detailsElem.style.marginBottom = "12px";
+
+                    const summaryElem = document.createElement("summary");
+                    summaryElem.style.cursor = "pointer";
+                    summaryElem.style.fontSize = "18px";
+                    summaryElem.style.fontWeight = "bold";
+
+                    // Visual indicator for access
+                    const hasAccess = doctorAccessMap.some(row => row[2] === email); // use the global map
+                    const accessIndicator = document.createElement("span");
+                    accessIndicator.style.marginLeft = "10px";
+                    accessIndicator.style.fontSize = "16px";
+                    accessIndicator.style.color = hasAccess ? "green" : "gray";
+                    accessIndicator.textContent = hasAccess ? "✔" : "🔒";
+
+                    summaryElem.textContent = pseudonym; 
+                    summaryElem.appendChild(accessIndicator);
+
+                    const contentElem = document.createElement("div");
+                    contentElem.textContent = "Loading...";
+                    contentElem.style.marginLeft = "15px";
+                    contentElem.style.whiteSpace = "pre-wrap";
+
+                    // Load patient info when clicked
+                    detailsElem.addEventListener("toggle", async () => {
+                        if (!detailsElem.open) return;
+
+                        const data = await fetchPatientInfo(email);
+                        if (data.error) {
+                            contentElem.textContent = "Could not load patient info.";
+                            return;
+                        }
+
+                        let formatted = "";
+                        for (const [field, value] of Object.entries(data)) {
+                            const displayValue = (value === null || value === undefined || value === "") ? "[no data]" : value;
+                            formatted += `${field.replace("_", " ")}: ${displayValue}\n`;
+                        }
+
+                        contentElem.textContent = formatted;
+                    });
+
+                    detailsElem.appendChild(summaryElem);
+                    detailsElem.appendChild(contentElem);
+                    responseArea.appendChild(detailsElem);
+                });
+            }
+            else {
+                document.getElementById("responseArea").style.color = "red";
+                document.getElementById("responseArea").textContent =
+                    `Error: ${response.status}`;
+            }
+        } catch (err) {
+            document.getElementById("responseArea").style.color = "red";
+            document.getElementById("responseArea").textContent =
+                `Network error: ${err.message}`;
+        }
+      }
+    });
+  }
+});
+
+document.getElementById("downloadBtn").addEventListener("click", downloadRecord);
+document.getElementById("summarizeBtn").addEventListener("click", () => toggleWindow('summarize'));
+document.getElementById("compareBtn").addEventListener("click", () => toggleWindow('compare'));
+document.getElementById("backBtn").addEventListener("click", () => {
+  window.location.href = `/provider_portal?email=${encodeURIComponent(doctorEmail)}&view=patients`;
+});
+
+window.addEventListener("load", loadPatientRecord);
+</script>
+
+<div id="sideWindow" style="display:none; position:fixed; right:0; top:80px; width:40%; height:calc(100% - 80px); background:#ffffff; border-left:2px solid #ccc; padding:20px; overflow-y:auto;">
+  <h2 id="windowTitle"></h2>
+  <textarea id="promptBox" style="width:100%; height:40px; box-sizing:border-box; resize:none; font-size:16px; padding:5px; overflow:hidden;" oninput="this.style.height='40px'; this.style.height=Math.max(40, this.scrollHeight)+'px';"></textarea>
+  <div id="numSimilarWrapper" style="display:none; margin-top:10px;">
+    <label for="numSimilarInput" style="font-size:16px; font-weight:bold;">
+      Number of patients to compare:
+    </label>
+    <input 
+      id="numSimilarInput"
+      type="number"
+      min="1"
+      max="100"
+      value="5"
+      style="width:120px; padding:5px; font-size:16px; margin-left:8px;"
+    >
+  </div>
+  <button id="sendBtn" style="margin-top:10px; padding:8px 16px; font-size:16px;">Send</button>
+  <div id="responseArea" style="margin-top:20px; white-space:pre-wrap; font-size:16px;"></div>
+</div>
+</body>
+</html>

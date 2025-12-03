@@ -8,7 +8,8 @@ def saveUserData(userEmail,
     
 
         # 1. WHITELIST columns (CRITICALLY IMPORTANT)
-    allowed_columns = {"FirstName", "LastName", "Phone", "Age", "Address", "PasswordHash"}
+    allowed_columns = {"First_Name", "Last_Name", "Phone_Number", "Age", "Address", "PasswordHash", "Sex", "Weight", "Height", 
+                       "Medications", "Allergies", "Active_Problems", "Medical_History", "Family_History", "Date_Updated"}
     if columnToSet not in allowed_columns:
         raise ValueError(f"Invalid or unsafe column name: {columnToSet}")
     

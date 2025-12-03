@@ -1,4 +1,4 @@
-INSERT INTO users (Email, FirstName, LastName, PatientOrProvider, PasswordHash)
+INSERT INTO users (Email, First_Name, Last_Name, PatientOrProvider, PasswordHash)
 
 VALUES  ('bob@bob.com', 'Bobf', 'Bobl', 'patient', '$2b$12$Vam60GL5xHEvpq/6EfMINOByfVe/7.tBwWBY/jhIPgroXT28yxUmO'),  
         ('sally@sally.com', 'Sallyf', 'Sallyl', 'provider', '$2b$12$Vam60GL5xHEvpq/6EfMINOByfVe/7.tBwWBY/jhIPgroXT28yxUmO'),
