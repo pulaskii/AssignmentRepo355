@@ -11,6 +11,7 @@ from pyModules.sqlpy.fetchData import fetchUserData
 from pyModules.sqlpy.saveData import saveUserData
 from pyModules.sqlpy.fetchAccessMap import fetchAccessMap
 from pyModules.sqlpy.saveEmbedding import save_embedding
+from pyModules.sqlpy.fetchAnonymizedData import fetchAnonymizedUserData
 import os
 from dotenv import load_dotenv
 import numpy as np
@@ -103,6 +104,19 @@ def api_get_patient():
 
     db = connectDatabase()
     result = fetchUserData(email, db)
+
+    if result:
+        return jsonify(result)
+
+    return jsonify({"error": "Could not fetch user"}), 400
+
+# Get panonymized atient data for view_record_page
+@app.route("/api/get_anonymized_patient")
+def get_anonymized_patient():
+    email = request.args.get("email")
+
+    db = connectDatabase()
+    result = fetchAnonymizedUserData(email, db)
 
     if result:
         return jsonify(result)

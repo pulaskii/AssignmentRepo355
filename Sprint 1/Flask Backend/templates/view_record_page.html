@@ -76,9 +76,10 @@ const params = new URLSearchParams(window.location.search);
 const patientEmail = params.get("email");
 const doctorEmail = params.get("doctor_email");
 let patientData = {};
+let doctorAccessMap = [];
 
 // Returns patient data as an array
-async function getPatientObject(email) {
+async function getPatientArray(email) {
     try {
         const response = await fetch(`/api/get_patient?email=${email}`);
         const patientArray = await response.json();
@@ -95,13 +96,53 @@ async function getPatientObject(email) {
     }
 }
 
+async function getAnonymizedPatientArray(email) {
+    try {
+        const response = await fetch(`/api/get_anonymized_patient?email=${email}`);
+        const patientArray = await response.json();
+        if (!Array.isArray(patientArray)) return { error: "Invalid response format" };
+
+        const patientObj = {};
+        patientArray.forEach(entry => {
+            patientObj[entry.field] = entry.value;
+        });
+
+        return patientObj;
+    } catch (err) {
+        return { error: err.message };
+    }
+}
+
 async function loadPatientRecord() {
-    patientData = await getPatientObject(patientEmail);
+    patientData = await getPatientArray(patientEmail);
     renderFields();
+    loadDoctorAccessMap();
+}
+
+async function loadDoctorAccessMap() {
+    try {
+        const response = await fetch(`/api/fetch_access_map?email=${encodeURIComponent(doctorEmail)}&type=doctor`);
+        const data = await response.json();
+        if (!data.error) {
+            doctorAccessMap = data; // store globally
+        } else {
+            console.error("Error fetching access map:", data.error);
+        }
+    } catch (err) {
+        console.error("Error fetching access map:", err);
+    }
 }
 
 async function fetchPatientInfo(email) {
-    return await getPatientObject(email);
+    // 1. Check if the doctor has access to this patient
+    const hasAccess = doctorAccessMap.some(row => row[2] === email);
+
+    // 2. Fetch the appropriate data
+    if (hasAccess) {
+        return await getPatientArray(email);  // full data
+    } else {
+        return await getAnonymizedPatientArray(email);  // anonymized
+    }
 }
 
 function renderFields() {
@@ -241,32 +282,57 @@ window.addEventListener("DOMContentLoaded", () => {
             });
 
             if (response.ok) {
-              const respJson = await response.json();
-              document.getElementById("responseArea").style.color = "black";
-              
-              const responseArea = document.getElementById("responseArea");
-              responseArea.innerHTML = "";  // clear text first
+                const respJson = await response.json();
+                const responseArea = document.getElementById("responseArea");
 
-              respJson.similar_patients.forEach(email => {
-                  const detailsElem = document.createElement("details");
-                  detailsElem.style.marginBottom = "12px";
+                // Map display names to real emails
+                const emailMap = {};
 
-                  const summaryElem = document.createElement("summary");
-                  summaryElem.textContent = email;
-                  summaryElem.style.cursor = "pointer";
-                  summaryElem.style.fontSize = "18px";
-                  summaryElem.style.fontWeight = "bold";
+                // Helper function to generate pseudonyms like A, B, ..., Z, AA, AB, ...
+                function getPseudonym(index) {
+                    let letters = "";
+                    while (index >= 0) {
+                        letters = String.fromCharCode(65 + (index % 26)) + letters;
+                        index = Math.floor(index / 26) - 1;
+                    }
+                    return `Patient ${letters}`;
+                }
 
-                  const contentElem = document.createElement("div");
-                  contentElem.textContent = "Loading...";
-                  contentElem.style.marginLeft = "15px";
-                  contentElem.style.whiteSpace = "pre-wrap";
+                responseArea.innerHTML = "";  // clear previous content
 
-                  // Load patient info when the user clicks on the email
-                  detailsElem.addEventListener("toggle", async () => {
-                    if (detailsElem.open) {
+                respJson.similar_patients.forEach((email, index) => {
+                    const pseudonym = getPseudonym(index);
+                    emailMap[pseudonym] = email;
+
+                    const detailsElem = document.createElement("details");
+                    detailsElem.style.marginBottom = "12px";
+
+                    const summaryElem = document.createElement("summary");
+                    summaryElem.style.cursor = "pointer";
+                    summaryElem.style.fontSize = "18px";
+                    summaryElem.style.fontWeight = "bold";
+
+                    // Visual indicator for access
+                    const hasAccess = doctorAccessMap.some(row => row[2] === email); // use the global map
+                    const accessIndicator = document.createElement("span");
+                    accessIndicator.style.marginLeft = "10px";
+                    accessIndicator.style.fontSize = "16px";
+                    accessIndicator.style.color = hasAccess ? "green" : "gray";
+                    accessIndicator.textContent = hasAccess ? "✔" : "🔒";
+
+                    summaryElem.textContent = pseudonym; 
+                    summaryElem.appendChild(accessIndicator);
+
+                    const contentElem = document.createElement("div");
+                    contentElem.textContent = "Loading...";
+                    contentElem.style.marginLeft = "15px";
+                    contentElem.style.whiteSpace = "pre-wrap";
+
+                    // Load patient info when clicked
+                    detailsElem.addEventListener("toggle", async () => {
+                        if (!detailsElem.open) return;
+
                         const data = await fetchPatientInfo(email);
-
                         if (data.error) {
                             contentElem.textContent = "Could not load patient info.";
                             return;
@@ -274,18 +340,19 @@ window.addEventListener("DOMContentLoaded", () => {
 
                         let formatted = "";
                         for (const [field, value] of Object.entries(data)) {
-                            formatted += `${field.replace("_", " ")}: ${value}\n`;
+                            const displayValue = (value === null || value === undefined || value === "") ? "[no data]" : value;
+                            formatted += `${field.replace("_", " ")}: ${displayValue}\n`;
                         }
 
                         contentElem.textContent = formatted;
-                    }
-                  });
-                  detailsElem.appendChild(summaryElem);
-                  detailsElem.appendChild(contentElem);
-                  responseArea.appendChild(detailsElem);
-              });
+                    });
 
-            } else {
+                    detailsElem.appendChild(summaryElem);
+                    detailsElem.appendChild(contentElem);
+                    responseArea.appendChild(detailsElem);
+                });
+            }
+            else {
                 document.getElementById("responseArea").style.color = "red";
                 document.getElementById("responseArea").textContent =
                     `Error: ${response.status}`;
