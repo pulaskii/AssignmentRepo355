@@ -14,6 +14,23 @@ VALUES  ('1', 'sally@sally.com','bob@bob.com'),
         ('2','sally@sally.com','jimothy@jimothy.com');
 
 
+###############################################
+
+
+INSERT INTO accessMap (connectionUID, doctor, patient)
+VALUES
+('3',  'sally@sally.com', 'user17@example.com'),
+('4',  'sally@sally.com', 'user3@example.com'),
+('5',  'sally@sally.com', 'user12@example.com'),
+('6',  'sally@sally.com', 'user8@example.com'),
+('7',  'sally@sally.com', 'user21@example.com'),
+('8',  'sally@sally.com', 'user1@example.com'),
+('9',  'sally@sally.com', 'user14@example.com'),
+('10', 'sally@sally.com', 'user5@example.com'),
+('11', 'sally@sally.com', 'user19@example.com'),
+('12', 'sally@sally.com', 'user10@example.com');
+
+
 
 ###############################################
 
