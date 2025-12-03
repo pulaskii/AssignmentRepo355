@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Provider Portal</title>
+    <style>
+        .patient-list {
+            height: 150px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            margin-top: 10px;
+        }
+
+        .patient-item {
+            padding: 8px;
+            cursor: pointer;
+        }
+
+        .patient-item.selected {
+            background-color: #cce5ff;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Provider Portal</h1>
+
+    <div>
+        <button id="view_patients_button">View Patients</button>
+        <button id="new_patient_button">New Patient</button>
+        <button id="profile_settings_button">Profile Settings</button>
+    </div>
+
+    <h3 id="patient_header" hidden>Patients:</h3>
+
+    <div class="patient-list" id="patient_list" hidden></div>
+
+    <div class="actions">
+        <button id="view_button" hidden>View</button>
+        <button id="edit_button" hidden>Edit</button>
+        <button id="remove_button" hidden>Remove</button>
+    </div>
+
+    <br>
+
+    <div>
+        <button id="back_button">Back</button>
+    </div>
+
+    <script>
+        const USER_EMAIL = "{{ doctor_email }}";
+        
+        let currentView = "home"; // "home" = portal menu, "list" = patient list
+        let patients = [];
+        let selectedPatient = null;
+
+        const view_patients_button = document.getElementById('view_patients_button');
+        const vnew_patient_button = document.getElementById('new_patient_button');
+        const profile_settings_button = document.getElementById('profile_settings_button');
+        const view_button = document.getElementById('view_button');
+        const edit_button = document.getElementById('edit_button');
+        const remove_button = document.getElementById('remove_button');
+        const patient_header = document.getElementById('patient_header');
+        const patient_list = document.getElementById('patient_list');
+        const back_button = document.getElementById('back_button');
+
+        async function loadPatients() {
+            try {
+                const response = await fetch(`/api/fetch_access_map?email=${encodeURIComponent(USER_EMAIL)}&type=doctor`);
+                const data = await response.json();
+
+                patients = data.map(row => ({
+                    name: row[0] + " " + row[1],
+                    email: row[2]
+                }));
+
+                renderPatients();
+
+            } catch (err) {
+                console.error("Error loading patients:", err);
+                alert("Failed to load patients.");
+            }
+        }
+
+        // Render patients
+        function renderPatients() {
+            patient_list.innerHTML = "";
+            patients.forEach(patient => {
+                const div = document.createElement("div");
+                div.classList.add("patient-item");
+                div.textContent = patient.name;
+
+                div.addEventListener("click", () => {
+                    if (selectedPatient === patient) {
+                        selectedPatient = null;
+                        div.classList.remove("selected");
+                    } else {
+                        document.querySelectorAll(".patient-item").forEach(item => item.classList.remove("selected"));
+                        selectedPatient = patient;
+                        div.classList.add("selected");
+                    }
+                });
+
+                patient_list.appendChild(div);
+            });
+        }
+
+        // EDIT button → go to edit page
+        edit_button.addEventListener('click', () => {
+            if (!selectedPatient) {
+                alert("Please select a patient before editing.");
+                return;
+            }
+            window.location.href = `edit_record_page?email=${encodeURIComponent(selectedPatient.email)}&doctor_email=${encodeURIComponent(USER_EMAIL)}`;
+        });
+
+        // VIEW button → go to view page
+        view_button.addEventListener('click', () => {
+            if (!selectedPatient) {
+                alert("Please select a patient before viewing.");
+                return;
+            }
+            window.location.href = `view_record_page?email=${encodeURIComponent(selectedPatient.email)}&doctor_email=${encodeURIComponent(USER_EMAIL)}`;
+        });
+
+        // VIEW PATIENTS → show list
+        view_patients_button.addEventListener('click', () => {
+            currentView = "list";
+
+            patient_list.hidden = false;
+            patient_header.hidden = false;
+            view_button.hidden = false;
+            edit_button.hidden = false;
+            remove_button.hidden = false;
+
+            loadPatients();
+
+            view_patients_button.style.display = 'none';
+            new_patient_button.style.display = 'none';
+            profile_settings_button.style.display = 'none';
+            back_button.hidden = false;
+        });
+
+        // BACK BUTTON → behavior depends on state
+        back_button.addEventListener('click', () => {
+            if (currentView === "list") {
+                // Go back to portal home
+                currentView = "home";
+
+                patient_list.hidden = true;
+                patient_header.hidden = true;
+                view_button.hidden = true;
+                edit_button.hidden = true;
+                remove_button.hidden = true;
+
+                selectedPatient = null;
+
+                view_patients_button.style.display = '';
+                new_patient_button.style.display = '';
+                profile_settings_button.style.display = '';
+                back_button.hidden = false;
+            } else {
+                // On home view → go to login page
+                window.location.href = "login_page";
+            }
+        });
+
+        // Auto-open patient list when returning from edit page
+        window.addEventListener('load', () => {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('view') === 'patients') {
+                currentView = "list";
+
+                patient_list.hidden = false;
+                patient_header.hidden = false;
+                view_button.hidden = false;
+                edit_button.hidden = false;
+                remove_button.hidden = false;
+
+                loadPatients();
+                view_patients_button.style.display = 'none';
+                new_patient_button.style.display = 'none';
+                profile_settings_button.style.display = 'none';
+                back_button.hidden = false;
+            }
+        });
+    </script>
+
+</body>
+</html>

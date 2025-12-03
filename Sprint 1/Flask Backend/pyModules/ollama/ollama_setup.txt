@@ -1,0 +1,28 @@
+1. Download Ollama here:
+    https://ollama.com/download
+
+2. In terminal, enter the following:
+    pip install ollama
+
+    ollama pull gpt-oss:20b-cloud
+
+    ollama pull embeddinggemma
+
+3. Get API Key:
+    1. Go here:
+        https://ollama.com/
+
+    2. Sign in
+
+    3. Settings
+
+    4. Keys
+
+    5. Add API Key
+
+    6. Copy API Key, paste it in the terminal like so:
+        Windows:
+            setx OLLAMA_API_KEY "your_api_key_here"
+
+        Mac/Linux:
+            export OLLAMA_API_KEY="your_api_key_here"

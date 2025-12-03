@@ -1,5 +1,7 @@
 from mysql import connector
 from mysql.connector import errorcode
+import mysql
+
 
 def addNewUser( firstName,
                 lastName,
@@ -12,23 +14,26 @@ def addNewUser( firstName,
     
     returnVal = 1
 
-    addUser = ("INSERT INTO Users"
-                 "(Email, FirstName, LastName, PasswordHash, Phone, PatientOrProvider)"
+    addUser = ("INSERT INTO users"
+                 "(Email, First_Name, Last_Name, PasswordHash, Phone_Number, PatientOrProvider)"
                  "VALUES ((%(EmailVal)s)," \
-                 "(%(FirstNameVal)s)," \
-                 "(%(LastNameVal)s)," \
+                 "(%(First_NameVal)s)," \
+                 "(%(Last_NameVal)s)," \
                  "(%(PasswordVal)s)," \
-                 "(%(PhoneVal)s)," \
+                 "(%(Phone_NumberVal)s)," \
                  "(%(PatientOrProviderVal)s))"
     )   
+    
+
+
 
 
     dataUser = {
     'EmailVal': userEmail,
-    'FirstNameVal': firstName,
-    'LastNameVal': lastName,
+    'First_NameVal': firstName,
+    'Last_NameVal': lastName,
     'PasswordVal': password,
-    'PhoneVal': phoneNumber,
+    'Phone_NumberVal': phoneNumber,
     'PatientOrProviderVal': PatientOrProvider
     }
 
@@ -42,13 +47,13 @@ def addNewUser( firstName,
             returnVal = 2
     
     try:
-        cursor.commit()
+        dbConnection.commit()
     except  mysql.connector.Error as err:
         if err.errno == 1062:
             returnVal = 3
 
-    cursor.close()
-    dbConnection.close()
+    cursor.close() # close cursor
+    dbConnection.close() # close connection
 
     return returnVal
 

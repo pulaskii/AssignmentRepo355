@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+
+  <style>
+    #saveBtn, #undoBtn, #downloadBtn, #backBtn {
+      padding: 10px 20px;
+      font-size: 16px;
+    }
+
+    .button-container {
+      width: 80%;
+      margin: 0 auto;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    #recordWrapper {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      width: 100%;
+      margin-top: 20px;
+    }
+
+    #recordContainer {
+      width: 60%;
+    }
+
+    .field-row {
+      width: 100%;
+      margin: 10px auto;
+      display: flex;
+      justify-content: flex-start;
+      gap: 8px;
+      align-items: flex-start;
+      font-size: 18px;
+    }
+
+    .field-row span {
+      width: 150px;
+      padding-top: 6px;
+    }
+
+    .field-row textarea {
+      flex: 1;
+      padding: 5px;
+      font-size: 16px;
+      min-height: 30px;
+      resize: vertical;
+    }
+  </style>
+</head>
+<body>
+
+<div class="button-container">
+  <button id="backBtn">Back</button>
+  <button id="downloadBtn">Download</button>
+  <button id="undoBtn">Undo</button>
+  <button id="saveBtn">Save</button>
+</div>
+
+<!-- New section replacing the text editor -->
+<div id="recordWrapper">
+  <div id="recordContainer">
+    Loading patient record...
+  </div>
+</div>
+
+<script>
+const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+// Get email from URL
+const params = new URLSearchParams(window.location.search);
+const patientEmail = params.get("email");
+const doctorEmail = params.get("doctor_email");
+
+let patientData = {};  // current data in textboxes
+let originalPatientData = {}; // backup for undo
+
+async function loadPatientRecord() {
+    const response = await fetch(`/api/get_patient?email=${patientEmail}`);
+    const patientArray = await response.json();
+
+    patientData = {};
+    patientArray.forEach(obj => {
+        patientData[obj.field] = obj.value;
+    });
+
+    originalPatientData = JSON.parse(JSON.stringify(patientData));
+    renderFields();
+}
+
+// Convert patientData → editable form fields
+function renderFields() {
+    const container = document.getElementById("recordContainer");
+    container.innerHTML = "";
+
+    for (const [fieldName, fieldValue] of Object.entries(patientData)) {
+
+        const row = document.createElement("div");
+        row.className = "field-row";
+
+        const label = document.createElement("span");
+        label.textContent = fieldName.replace("_", " "); // Format field name
+
+        const textarea = document.createElement("textarea");
+        textarea.value = fieldValue;
+        textarea.dataset.field = fieldName;
+        textarea.rows = 1;
+        textarea.style.height = "30px"; // initial height
+        textarea.style.overflowY = "hidden";
+
+        textarea.dispatchEvent(new Event('input'));
+
+        row.appendChild(label);
+        row.appendChild(textarea);
+        container.appendChild(row);
+    }
+}
+
+function downloadRecord() {
+    const updated = {};
+    document.querySelectorAll("textarea[data-field]").forEach(textarea => {
+        updated[textarea.dataset.field] = textarea.value;
+    });
+
+    // Convert updated data into text (simple key: value per line)
+    let textContent = "";
+    for (const [key, value] of Object.entries(updated)) {
+        textContent += `${key.replace("_", " ")}: ${value}\n`;
+    }
+
+    const blob = new Blob([textContent], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "Patient_Record.txt";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function undoChanges() {
+    if (confirm("Are you sure you want to undo all changes?")) {
+        // Replace current textareas with original data
+        document.querySelectorAll("textarea[data-field]").forEach(textarea => {
+            const field = textarea.dataset.field;
+            textarea.value = originalPatientData[field];
+            // Adjust height
+            textarea.style.height = "30px";
+            textarea.style.overflowY = "hidden";
+        });
+    }
+}
+
+function saveRecord() {
+  if (confirm("Are you sure you want to save all changes?")) {
+    const updatedFields = {};
+    document.querySelectorAll("textarea[data-field]").forEach(textarea => {
+      const fieldWithUnderscore = textarea.dataset.field.replace(" ", "_");
+      const value = textarea.value.trim() === "" ? null : textarea.value;
+      updatedFields[fieldWithUnderscore] = value;
+  });
+
+    fetch("/api/update_record", {
+      method: "POST",
+      headers: { 
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrfToken
+      },
+      body: JSON.stringify({
+        email: patientEmail,
+        updated_fields: updatedFields
+      })
+    }).then(() => {
+        originalPatientData = JSON.parse(JSON.stringify(updatedFields));
+    });
+  }
+}
+
+document.getElementById("downloadBtn").addEventListener("click", downloadRecord);
+document.getElementById("undoBtn").addEventListener("click", undoChanges);
+document.getElementById("saveBtn").addEventListener("click", saveRecord);
+document.getElementById("backBtn").addEventListener("click", () => {
+  window.location.href = `/provider_portal?email=${encodeURIComponent(doctorEmail)}&view=patients`;
+});
+
+window.addEventListener("load", loadPatientRecord);
+</script>
+
+</body>
+</html>
