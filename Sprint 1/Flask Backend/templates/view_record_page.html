@@ -300,6 +300,12 @@ window.addEventListener("DOMContentLoaded", () => {
 
                 responseArea.innerHTML = "";  // clear previous content
 
+                if (respJson.fields_compared.length === 0) {
+                    responseArea.style.color = "red";
+                    responseArea.textContent = "One or more of your specified fields were not found in the patient record. Please refine your prompt and try again.";
+                    return;
+                }
+
                 respJson.similar_patients.forEach((email, index) => {
                     const pseudonym = getPseudonym(index);
                     emailMap[pseudonym] = email;

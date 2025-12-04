@@ -151,11 +151,6 @@ VALUES
 ('13',  'sally@sally.com', 'jane.doe12@example.com'),
 ('14',  'sally@sally.com', 'michael.roberts@example.com'),
 ('15',  'sally@sally.com', 'samira.khan@example.com'),
-('16',  'sally@sally.com', 'tyler.benson@example.com'),
-('17',  'sally@sally.com', 'ana.silva@example.com'),
-('18',  'sally@sally.com', 'mark.caldwell@example.com'),
-('19',  'sally@sally.com', 'emily.rivera@example.com'),
-('20',  'sally@sally.com', 'david.nguyen@example.com'),
 ('21',  'sally@sally.com', 'lucia.martinez@example.com'),
 ('22',  'sally@sally.com', 'brandon.holt@example.com');
 

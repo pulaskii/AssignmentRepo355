@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 AVAILABLE_FIELDS = [
     "Age", "Sex", "Weight", "Height",
     "Medications", "Allergies", "Active_Problems",
-    "Medical_History", "Family_History"
+    "Medical_History", "Family_History", "Full_Record"
 ] # TODO Get from database so not hardcoded?
 
 LLM_MODEL = "gpt-oss:20b-cloud"
@@ -34,6 +34,7 @@ def select_fields_from_prompt(prompt: str, available_fields: list[str]):
     system_message = (
         "You identify which fields of a patient record are relevant to a user's query. "
         "Return a JSON list with only fields provided in the field list."
+        "If the prompt does not specify any particular fields, return null (an empty list)."
     )
 
     user_message = (
@@ -108,7 +109,9 @@ def find_similar_patients(dbConnection, target_email: str, prompt: str = "", num
     fields_to_compare = select_fields_from_prompt(prompt, AVAILABLE_FIELDS)
 
     if not fields_to_compare:
-        fields_to_compare = AVAILABLE_FIELDS
+        print("original fields:")
+        print(fields_to_compare)
+        return [], []
 
     # 3. Load target patient's embeddings
     target_vecs = load_patient_field_embeddings(dbConnection, target_email, fields_to_compare)

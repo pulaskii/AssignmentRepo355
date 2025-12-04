@@ -124,6 +124,7 @@ def get_anonymized_patient():
     return jsonify({"error": "Could not fetch user"}), 400
 
 # Save updated patient data and embeddings from edit_record_page
+@csrf.exempt
 @app.route("/api/update_record", methods=["POST"])
 def api_update_record():
     data = request.get_json()
@@ -239,6 +240,16 @@ def similar_patients():
         return jsonify({"error": "email must be a string"}), 400
 
     top_emails, fields_used = find_similar_patients(db, email, prompt, num_similar)
+
+    print(fields_used)
+
+    if not fields_used:
+        return jsonify({
+            "target_email": email,
+            "similar_patients": [],
+            "fields_compared": []
+        }), 200
+
     return jsonify({
         "target_email": email,
         "similar_patients": top_emails,
